@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
-  ShoppingCart, 
+  ShoppingBag, 
   Plus, 
   Eye, 
   TrendingUp, 
@@ -200,7 +200,7 @@ export default function NFTMarketplace({ userId }: NFTMarketplaceProps) {
     <Card className="glass-card border-purple-500/30">
       <CardHeader>
         <CardTitle className="text-2xl font-bold flex items-center">
-          <ShoppingCart className="w-6 h-6 mr-3 text-purple-400" />
+          <ShoppingBag className="w-6 h-6 mr-3 text-purple-400" />
           NFT Marketplace
           <Badge className="ml-3 bg-purple-500/10 text-purple-400 border-purple-500/20">
             Professional
@@ -362,7 +362,7 @@ export default function NFTMarketplace({ userId }: NFTMarketplaceProps) {
                           disabled={purchaseNFT.isPending}
                           className="w-full btn-primary"
                         >
-                          <ShoppingCart className="w-4 h-4 mr-2" />
+                          <ShoppingBag className="w-4 h-4 mr-2" />
                           {purchaseNFT.isPending ? 'Processing...' : 'Buy Now'}
                         </Button>
                       </div>
