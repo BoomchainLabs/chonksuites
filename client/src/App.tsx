@@ -20,7 +20,7 @@ import WorkingLanding from "@/pages/working-landing";
 import ProfessionalLanding from "@/components/professional-landing";
 import MonetizationDashboard from "@/components/monetization-dashboard";
 import RealStakingPlatform from "@/components/real-staking-platform";
-import CommunityChallenge from "@/components/community-challenge-leaderboard";
+import SimpleChallenges from "@/components/simple-challenges";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -59,7 +59,7 @@ function Router() {
           <Route path="/revenue" component={MonetizationDashboard} />
           <Route path="/dao" component={DAOGovernance} />
           <Route path="/achievements" component={AchievementsSimple} />
-          <Route path="/challenges" component={CommunityChallenge} />
+          <Route path="/challenges" component={SimpleChallenges} />
           <Route path="/playground" component={SimplePlayground} />
           <Route path="/terminal" component={HackerTerminal} />
         </>

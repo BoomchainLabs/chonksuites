@@ -1604,27 +1604,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get leaderboard
+  // Simple leaderboard endpoint (returns empty for now since leaderboard was removed)
   app.get('/api/leaderboard/:category?', async (req, res) => {
-    try {
-      const category = req.params.category || 'all_time';
-      const leaderboard = await storage.getLeaderboard(category);
-      
-      // Enrich with user data
-      const enrichedLeaderboard = await Promise.all(leaderboard.map(async (entry) => {
-        const user = await storage.getUser(entry.userId);
-        return {
-          ...entry,
-          username: user?.username || user?.email?.split('@')[0] || 'Anonymous',
-          profileImageUrl: user?.profileImageUrl || null
-        };
-      }));
-
-      res.json(enrichedLeaderboard);
-    } catch (error) {
-      console.error('Error fetching leaderboard:', error);
-      res.status(500).json({ message: 'Failed to fetch leaderboard' });
-    }
+    res.json([]);
   });
 
   // Initialize some sample challenges
