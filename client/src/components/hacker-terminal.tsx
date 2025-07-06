@@ -24,6 +24,7 @@ import TerminalTheme, {
   HackerButton, 
   TerminalCard 
 } from './terminal-theme';
+import MobileNavigation from './mobile-navigation';
 
 const HackerTerminal: React.FC = () => {
   const [currentCommand, setCurrentCommand] = useState(0);
@@ -126,8 +127,10 @@ const HackerTerminal: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-green-400 p-6 font-mono">
-      {/* Matrix Rain Background */}
+    <div className="min-h-screen bg-black text-green-400 w-full font-mono">
+      <MobileNavigation />
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
+        {/* Matrix Rain Background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         {[...Array(15)].map((_, i) => (
           <div
@@ -349,6 +352,7 @@ const HackerTerminal: React.FC = () => {
             </TerminalCard>
           </motion.div>
         )}
+      </div>
       </div>
     </div>
   );

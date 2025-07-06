@@ -61,11 +61,11 @@ export default function SimpleDashboard() {
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-800">
+    <div className="full-width-container bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-800">
       <AnimatedBackground />
       <MobileNavigation />
       
-      <div className="relative z-10 p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 max-w-7xl mx-auto">
+      <div className="relative z-10 full-width-content space-y-6 sm:space-y-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center space-x-3 sm:space-x-4">
@@ -81,7 +81,7 @@ export default function SimpleDashboard() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <div className="full-width-grid full-width-grid-sm full-width-grid-lg gap-4 sm:gap-6">
           <motion.div whileHover={{ scale: 1.02 }}>
             <Card className="glass-card border-purple-500/30">
               <CardHeader className="pb-2">

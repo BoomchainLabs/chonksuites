@@ -8,7 +8,7 @@ import SimpleDashboard from "@/components/simple-dashboard";
 import ProductionTradingDashboard from "@/components/production-trading-dashboard";
 import SlerfTradingHub from "@/components/slerf-trading-hub";
 import DAOGovernance from "@/components/dao-governance";
-import MascotShowcase from "@/components/mascot-showcase";
+
 import SimplePlayground from "@/components/simple-playground";
 import HackerTerminal from "@/components/hacker-terminal";
 import AchievementsSimple from "@/components/achievements-simple";
@@ -31,12 +31,9 @@ function Router() {
               </h1>
               <p className="text-gray-400">Meet your animated token companions that react to market changes</p>
             </div>
-            <MascotShowcase
-              slerfPrice={0.0234}
-              slerfChange={15.67}
-              chonkPrice={0.00156}
-              chonkChange={-3.45}
-            />
+            <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-8 text-center">
+              <p className="text-slate-400">Interactive mascots coming soon!</p>
+            </div>
           </div>
         </div>
       )} />
@@ -50,6 +47,8 @@ function Router() {
           <Route path="/slerf" component={SlerfTradingHub} />
           <Route path="/dao" component={DAOGovernance} />
           <Route path="/achievements" component={AchievementsSimple} />
+          <Route path="/playground" component={SimplePlayground} />
+          <Route path="/terminal" component={HackerTerminal} />
         </>
       )}
       <Route component={NotFound} />

@@ -132,9 +132,9 @@ export default function AchievementsSimple() {
   const overallProgress = (totalProgress / achievements.length) * 100;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-800 text-white p-4 sm:p-6 lg:p-8">
+    <div className="full-width-container bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-800 text-white">
       <MobileNavigation />
-      <div className="max-w-7xl mx-auto">
+      <div className="full-width-content">
         {/* Navigation Header */}
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
@@ -187,7 +187,7 @@ export default function AchievementsSimple() {
         </div>
 
         {/* Stats Overview */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+        <div className="full-width-grid full-width-grid-sm full-width-grid-lg full-width-grid-xl gap-4 sm:gap-6 mb-6 sm:mb-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

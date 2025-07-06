@@ -56,11 +56,91 @@
     -webkit-tap-highlight-color: transparent;
     background: radial-gradient(ellipse at top, hsl(220, 13%, 12%) 0%, hsl(220, 13%, 9%) 100%);
     min-height: 100vh;
+    width: 100%;
     overflow-x: hidden;
   }
 
   html {
     scroll-behavior: smooth;
+    width: 100%;
+  }
+  
+  #root {
+    width: 100%;
+    min-height: 100vh;
+  }
+  
+  /* Full Width Template Classes */
+  .full-width-container {
+    width: 100vw;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    position: relative;
+  }
+  
+  .full-width-content {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 1rem;
+  }
+  
+  .full-width-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    width: 100%;
+  }
+  
+  /* Responsive full-width breakpoints */
+  @media (min-width: 640px) {
+    .full-width-content {
+      padding: 1.5rem;
+    }
+    
+    .full-width-grid-sm {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  
+  @media (min-width: 768px) {
+    .full-width-content {
+      padding: 2rem;
+    }
+    
+    .full-width-grid-md {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    .full-width-content {
+      padding: 2.5rem;
+    }
+    
+    .full-width-grid-lg {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+  
+  @media (min-width: 1280px) {
+    .full-width-content {
+      padding: 3rem;
+    }
+    
+    .full-width-grid-xl {
+      grid-template-columns: repeat(5, 1fr);
+    }
+  }
+  
+  /* Full-width utilities */
+  .w-full-viewport {
+    width: 100vw;
+  }
+  
+  .no-max-width {
+    max-width: none !important;
   }
   
   /* Mobile Optimizations */
