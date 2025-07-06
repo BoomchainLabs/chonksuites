@@ -1,6 +1,6 @@
 import { 
   users, tasks, userTasks, tokenBalances, referrals, activities,
-  type User, type InsertUser, type Task, type InsertTask, 
+  type User, type InsertUser, type UpsertUser, type Task, type InsertTask, 
   type UserTask, type InsertUserTask, type TokenBalance, type InsertTokenBalance,
   type Referral, type InsertReferral, type Activity, type InsertActivity
 } from "@shared/schema";
@@ -9,11 +9,13 @@ import { eq, and, gte } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
-  getUser(id: number): Promise<User | undefined>;
+  // (IMPORTANT) these user operations are mandatory for Replit Auth.
+  getUser(id: string): Promise<User | undefined>;
+  upsertUser(user: UpsertUser): Promise<User>;
   getUserByWalletAddress(walletAddress: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  updateUser(id: number, updates: Partial<User>): Promise<User>;
-  getUserStats(userId: number): Promise<{
+  updateUser(id: string, updates: Partial<User>): Promise<User>;
+  getUserStats(userId: string): Promise<{
     totalRewards: number;
     tasksCompleted: number;
     referralCount: number;
@@ -29,435 +31,71 @@ export interface IStorage {
   createTask(task: InsertTask): Promise<Task>;
   
   // User task operations
-  getUserTasks(userId: number): Promise<UserTask[]>;
+  getUserTasks(userId: string): Promise<UserTask[]>;
   completeUserTask(userTask: InsertUserTask): Promise<UserTask>;
-  getCompletedTasksToday(userId: number): Promise<UserTask[]>;
-  resetDailyTasks(userId: number): Promise<void>;
+  getCompletedTasksToday(userId: string): Promise<UserTask[]>;
+  resetDailyTasks(userId: string): Promise<void>;
   
   // Token balance operations
-  getUserTokenBalances(userId: number): Promise<TokenBalance[]>;
-  updateTokenBalance(userId: number, tokenSymbol: string, balance: number): Promise<TokenBalance>;
+  getUserTokenBalances(userId: string): Promise<TokenBalance[]>;
+  updateTokenBalance(userId: string, tokenSymbol: string, balance: number): Promise<TokenBalance>;
   
   // Referral operations
   createReferral(referral: InsertReferral): Promise<Referral>;
-  getUserReferrals(userId: number): Promise<Referral[]>;
+  getUserReferrals(userId: string): Promise<Referral[]>;
   
   // Activity operations
   createActivity(activity: InsertActivity): Promise<Activity>;
-  getUserActivities(userId: number, limit?: number): Promise<Activity[]>;
+  getUserActivities(userId: string, limit?: number): Promise<Activity[]>;
   
   // Claims
-  claimRewards(userId: number): Promise<{ claimed: number }>;
-}
-
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private tasks: Map<number, Task>;
-  private userTasks: Map<number, UserTask>;
-  private tokenBalances: Map<number, TokenBalance>;
-  private referrals: Map<number, Referral>;
-  private activities: Map<number, Activity>;
-  private currentUserId: number;
-  private currentTaskId: number;
-  private currentUserTaskId: number;
-  private currentTokenBalanceId: number;
-  private currentReferralId: number;
-  private currentActivityId: number;
-
-  constructor() {
-    this.users = new Map();
-    this.tasks = new Map();
-    this.userTasks = new Map();
-    this.tokenBalances = new Map();
-    this.referrals = new Map();
-    this.activities = new Map();
-    this.currentUserId = 1;
-    this.currentTaskId = 1;
-    this.currentUserTaskId = 1;
-    this.currentTokenBalanceId = 1;
-    this.currentReferralId = 1;
-    this.currentActivityId = 1;
-    
-    // Initialize default tasks
-    this.initializeTasks();
-  }
-
-  private initializeTasks() {
-    const defaultTasks = [
-      {
-        name: "Daily Login",
-        description: "Sign in to your account",
-        reward: 10,
-        taskType: "daily",
-        isActive: true,
-        icon: "fas fa-check",
-        buttonText: "Complete"
-      },
-      {
-        name: "Complete Quiz",
-        description: "Answer Web3 knowledge questions",
-        reward: 25,
-        taskType: "daily",
-        isActive: true,
-        icon: "fas fa-question",
-        buttonText: "Start Quiz"
-      },
-      {
-        name: "Share on Twitter",
-        description: "Tweet with #Chonk9k hashtag",
-        reward: 20,
-        taskType: "daily",
-        isActive: true,
-        icon: "fab fa-twitter",
-        buttonText: "Tweet"
-      },
-      {
-        name: "Invite Friends",
-        description: "Refer new users to the platform",
-        reward: 30,
-        taskType: "daily",
-        isActive: true,
-        icon: "fas fa-users",
-        buttonText: "Invite"
-      }
-    ];
-
-    defaultTasks.forEach(task => {
-      const id = this.currentTaskId++;
-      this.tasks.set(id, { ...task, id });
-    });
-  }
-
-  async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
-  }
-
-  async getUserByWalletAddress(walletAddress: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.walletAddress === walletAddress
-    );
-  }
-
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentUserId++;
-    const user: User = {
-      id,
-      walletAddress: insertUser.walletAddress,
-      chainType: insertUser.chainType,
-      username: insertUser.username || null,
-      loginStreak: 1,
-      totalRewards: 0,
-      tasksCompleted: 0,
-      referralCount: 0,
-      loyaltyScore: 0,
-      pendingRewards: 0,
-      referralEarnings: 0,
-      lastLoginAt: new Date(),
-      createdAt: new Date(),
-      referredBy: insertUser.referredBy || null
-    };
-    this.users.set(id, user);
-    
-    // Initialize token balances
-    await this.updateTokenBalance(id, "SLERF", 1247);
-    await this.updateTokenBalance(id, "CHONKPUMP", 892);
-    
-    return user;
-  }
-
-  async updateUser(id: number, updates: Partial<User>): Promise<User> {
-    const existingUser = this.users.get(id);
-    if (!existingUser) {
-      throw new Error("User not found");
-    }
-    
-    const updatedUser = { ...existingUser, ...updates };
-    this.users.set(id, updatedUser);
-    return updatedUser;
-  }
-
-  async getUserStats(userId: number): Promise<{
-    totalRewards: number;
-    tasksCompleted: number;
-    referralCount: number;
-    loyaltyScore: number;
-    pendingRewards: number;
-    referralEarnings: number;
-    loginStreak: number;
-  }> {
-    const user = this.users.get(userId);
-    if (!user) {
-      throw new Error("User not found");
-    }
-
-    return {
-      totalRewards: user.totalRewards || 0,
-      tasksCompleted: user.tasksCompleted || 0,
-      referralCount: user.referralCount || 0,
-      loyaltyScore: user.loyaltyScore || 0,
-      pendingRewards: user.pendingRewards || 0,
-      referralEarnings: user.referralEarnings || 0,
-      loginStreak: user.loginStreak || 0,
-    };
-  }
-
-  async getAllTasks(): Promise<Task[]> {
-    return Array.from(this.tasks.values()).filter(task => task.isActive);
-  }
-
-  async getTask(id: number): Promise<Task | undefined> {
-    return this.tasks.get(id);
-  }
-
-  async createTask(insertTask: InsertTask): Promise<Task> {
-    const id = this.currentTaskId++;
-    const task: Task = { 
-      id,
-      name: insertTask.name,
-      description: insertTask.description,
-      reward: insertTask.reward,
-      taskType: insertTask.taskType,
-      isActive: insertTask.isActive ?? true,
-      icon: insertTask.icon,
-      buttonText: insertTask.buttonText
-    };
-    this.tasks.set(id, task);
-    return task;
-  }
-
-  async getUserTasks(userId: number): Promise<UserTask[]> {
-    return Array.from(this.userTasks.values()).filter(
-      (userTask) => userTask.userId === userId
-    );
-  }
-
-  async completeUserTask(insertUserTask: InsertUserTask): Promise<UserTask> {
-    const id = this.currentUserTaskId++;
-    const userTask: UserTask = {
-      id,
-      userId: insertUserTask.userId || null,
-      taskId: insertUserTask.taskId || null,
-      completedAt: new Date(),
-      canReset: insertUserTask.canReset ?? true,
-      lastResetAt: new Date()
-    };
-    this.userTasks.set(id, userTask);
-    
-    // Update user stats
-    const user = this.users.get(insertUserTask.userId!);
-    if (user) {
-      const task = this.tasks.get(insertUserTask.taskId!);
-      if (task) {
-        await this.updateUser(user.id, {
-          tasksCompleted: (user.tasksCompleted || 0) + 1,
-          pendingRewards: (user.pendingRewards || 0) + task.reward,
-          totalRewards: (user.totalRewards || 0) + task.reward
-        });
-        
-        // Create activity
-        await this.createActivity({
-          userId: user.id,
-          type: "task_completed",
-          description: `Completed ${task.name}`,
-          reward: task.reward
-        });
-      }
-    }
-    
-    return userTask;
-  }
-
-  async getCompletedTasksToday(userId: number): Promise<UserTask[]> {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    return Array.from(this.userTasks.values()).filter(
-      (userTask) => 
-        userTask.userId === userId && 
-        userTask.completedAt && 
-        userTask.completedAt >= today
-    );
-  }
-
-  async resetDailyTasks(userId: number): Promise<void> {
-    const userTasks = await this.getUserTasks(userId);
-    userTasks.forEach(userTask => {
-      if (userTask.canReset) {
-        this.userTasks.delete(userTask.id);
-      }
-    });
-  }
-
-  async getUserTokenBalances(userId: number): Promise<TokenBalance[]> {
-    return Array.from(this.tokenBalances.values()).filter(
-      (balance) => balance.userId === userId
-    );
-  }
-
-  async updateTokenBalance(userId: number, tokenSymbol: string, balance: number): Promise<TokenBalance> {
-    const existing = Array.from(this.tokenBalances.values()).find(
-      (b) => b.userId === userId && b.tokenSymbol === tokenSymbol
-    );
-
-    if (existing) {
-      const updated = { ...existing, balance };
-      this.tokenBalances.set(existing.id, updated);
-      return updated;
-    }
-
-    const id = this.currentTokenBalanceId++;
-    const newBalance: TokenBalance = {
-      id,
-      userId,
-      tokenSymbol,
-      balance,
-      chainType: tokenSymbol === "SLERF" ? "base" : "solana"
-    };
-    this.tokenBalances.set(id, newBalance);
-    return newBalance;
-  }
-
-  async createReferral(insertReferral: InsertReferral): Promise<Referral> {
-    const id = this.currentReferralId++;
-    const referral: Referral = {
-      id,
-      referrerId: insertReferral.referrerId || null,
-      referredUserId: insertReferral.referredUserId || null,
-      rewardEarned: insertReferral.rewardEarned || null,
-      createdAt: new Date()
-    };
-    this.referrals.set(id, referral);
-    
-    // Update referrer stats
-    const referrer = this.users.get(insertReferral.referrerId!);
-    if (referrer) {
-      await this.updateUser(referrer.id, {
-        referralCount: (referrer.referralCount || 0) + 1,
-        referralEarnings: (referrer.referralEarnings || 0) + (insertReferral.rewardEarned || 30),
-        pendingRewards: (referrer.pendingRewards || 0) + (insertReferral.rewardEarned || 30)
-      });
-      
-      // Create activity
-      await this.createActivity({
-        userId: referrer.id,
-        type: "referral_earned",
-        description: "Earned referral bonus",
-        reward: insertReferral.rewardEarned || 30
-      });
-    }
-    
-    return referral;
-  }
-
-  async getUserReferrals(userId: number): Promise<Referral[]> {
-    return Array.from(this.referrals.values()).filter(
-      (referral) => referral.referrerId === userId
-    );
-  }
-
-  async createActivity(insertActivity: InsertActivity): Promise<Activity> {
-    const id = this.currentActivityId++;
-    const activity: Activity = {
-      id,
-      userId: insertActivity.userId || null,
-      type: insertActivity.type,
-      description: insertActivity.description,
-      reward: insertActivity.reward || null,
-      createdAt: new Date()
-    };
-    this.activities.set(id, activity);
-    return activity;
-  }
-
-  async getUserActivities(userId: number, limit = 10): Promise<Activity[]> {
-    return Array.from(this.activities.values())
-      .filter((activity) => activity.userId === userId)
-      .sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0))
-      .slice(0, limit);
-  }
-
-  async claimRewards(userId: number): Promise<{ claimed: number }> {
-    const user = this.users.get(userId);
-    if (!user) {
-      throw new Error("User not found");
-    }
-
-    const claimed = user.pendingRewards || 0;
-    await this.updateUser(userId, { pendingRewards: 0 });
-    
-    // Update token balance
-    await this.updateTokenBalance(userId, "SLERF", (await this.getUserTokenBalances(userId)).find(b => b.tokenSymbol === "SLERF")?.balance || 0 + claimed);
-    
-    // Create activity
-    await this.createActivity({
-      userId,
-      type: "tokens_claimed",
-      description: `Claimed ${claimed} $SLERF tokens`,
-      reward: claimed
-    });
-
-    return { claimed };
-  }
+  claimRewards(userId: string): Promise<{ claimed: number }>;
 }
 
 export class DatabaseStorage implements IStorage {
   constructor() {
-    // Initialize default tasks
     this.initializeTasks();
   }
 
   private async initializeTasks() {
-    const defaultTasks = [
-      {
-        name: "Daily Login",
-        description: "Sign in to your account",
-        reward: 10,
-        taskType: "daily",
-        isActive: true,
-        icon: "fas fa-check",
-        buttonText: "Complete"
-      },
-      {
-        name: "Complete Quiz",
-        description: "Answer Web3 knowledge questions",
-        reward: 25,
-        taskType: "daily",
-        isActive: true,
-        icon: "fas fa-question",
-        buttonText: "Start Quiz"
-      },
-      {
-        name: "Share on Twitter",
-        description: "Tweet with #Chonk9k hashtag",
-        reward: 20,
-        taskType: "daily",
-        isActive: true,
-        icon: "fab fa-twitter",
-        buttonText: "Tweet"
-      },
-      {
-        name: "Invite Friends",
-        description: "Refer new users to the platform",
-        reward: 30,
-        taskType: "daily",
-        isActive: true,
-        icon: "fas fa-users",
-        buttonText: "Invite"
-      }
-    ];
-
-    // Check if tasks already exist
-    const existingTasks = await this.getAllTasks();
+    // Initialize default tasks if they don't exist
+    const existingTasks = await db.select().from(tasks);
+    
     if (existingTasks.length === 0) {
-      for (const task of defaultTasks) {
-        await this.createTask(task);
-      }
+      const defaultTasks = [
+        { name: "Daily Check-in", description: "Complete your daily check-in", reward: 10, taskType: "daily", icon: "Calendar", buttonText: "Check In" },
+        { name: "Share on Social", description: "Share Chonk9k on social media", reward: 25, taskType: "daily", icon: "Share", buttonText: "Share" },
+        { name: "Invite Friend", description: "Invite a friend to join Chonk9k", reward: 50, taskType: "weekly", icon: "UserPlus", buttonText: "Invite" },
+        { name: "Connect Wallet", description: "Connect your crypto wallet", reward: 100, taskType: "one_time", icon: "Wallet", buttonText: "Connect" },
+        { name: "Trade Tokens", description: "Make your first token trade", reward: 75, taskType: "one_time", icon: "TrendingUp", buttonText: "Trade" },
+        { name: "Complete Profile", description: "Fill out your profile information", reward: 30, taskType: "one_time", icon: "User", buttonText: "Complete" }
+      ];
+      
+      await db.insert(tasks).values(defaultTasks);
     }
   }
 
-  async getUser(id: number): Promise<User | undefined> {
+  // User operations
+  // (IMPORTANT) these user operations are mandatory for Replit Auth.
+
+  async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user || undefined;
+    return user;
+  }
+
+  async upsertUser(userData: UpsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(userData)
+      .onConflictDoUpdate({
+        target: users.id,
+        set: {
+          ...userData,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return user;
   }
 
   async getUserByWalletAddress(walletAddress: string): Promise<User | undefined> {
@@ -469,11 +107,9 @@ export class DatabaseStorage implements IStorage {
     const [user] = await db
       .insert(users)
       .values({
-        walletAddress: insertUser.walletAddress,
-        chainType: insertUser.chainType,
-        username: insertUser.username,
-        lastLoginAt: insertUser.lastLoginAt,
-        referredBy: insertUser.referredBy
+        ...insertUser,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       })
       .returning();
     
@@ -484,10 +120,10 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async updateUser(id: number, updates: Partial<User>): Promise<User> {
+  async updateUser(id: string, updates: Partial<User>): Promise<User> {
     const [user] = await db
       .update(users)
-      .set(updates)
+      .set({ ...updates, updatedAt: new Date() })
       .where(eq(users.id, id))
       .returning();
     
@@ -498,7 +134,7 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async getUserStats(userId: number): Promise<{
+  async getUserStats(userId: string): Promise<{
     totalRewards: number;
     tasksCompleted: number;
     referralCount: number;
@@ -523,13 +159,14 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
+  // Task operations
   async getAllTasks(): Promise<Task[]> {
     return await db.select().from(tasks).where(eq(tasks.isActive, true));
   }
 
   async getTask(id: number): Promise<Task | undefined> {
     const [task] = await db.select().from(tasks).where(eq(tasks.id, id));
-    return task || undefined;
+    return task;
   }
 
   async createTask(insertTask: InsertTask): Promise<Task> {
@@ -540,7 +177,8 @@ export class DatabaseStorage implements IStorage {
     return task;
   }
 
-  async getUserTasks(userId: number): Promise<UserTask[]> {
+  // User task operations
+  async getUserTasks(userId: string): Promise<UserTask[]> {
     return await db.select().from(userTasks).where(eq(userTasks.userId, userId));
   }
 
@@ -548,185 +186,123 @@ export class DatabaseStorage implements IStorage {
     const [userTask] = await db
       .insert(userTasks)
       .values({
-        userId: insertUserTask.userId,
-        taskId: insertUserTask.taskId,
+        ...insertUserTask,
         completedAt: new Date(),
-        canReset: insertUserTask.canReset ?? true,
-        lastResetAt: new Date()
       })
       .returning();
-    
-    // Update user stats
-    if (userTask.userId && userTask.taskId) {
-      const user = await this.getUser(userTask.userId);
-      const task = await this.getTask(userTask.taskId);
-      
-      if (user && task) {
-        await this.updateUser(user.id, {
-          tasksCompleted: (user.tasksCompleted || 0) + 1,
-          pendingRewards: (user.pendingRewards || 0) + task.reward,
-          totalRewards: (user.totalRewards || 0) + task.reward
-        });
-        
-        // Create activity
-        await this.createActivity({
-          userId: user.id,
-          type: "task_completed",
-          description: `Completed ${task.name}`,
-          reward: task.reward
-        });
-      }
-    }
-    
     return userTask;
   }
 
-  async getCompletedTasksToday(userId: number): Promise<UserTask[]> {
+  async getCompletedTasksToday(userId: string): Promise<UserTask[]> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    return await db
-      .select()
-      .from(userTasks)
-      .where(
-        and(
-          eq(userTasks.userId, userId),
-          gte(userTasks.completedAt, today)
-        )
-      );
+    return await db.select().from(userTasks).where(
+      and(
+        eq(userTasks.userId, userId),
+        gte(userTasks.completedAt, today)
+      )
+    );
   }
 
-  async resetDailyTasks(userId: number): Promise<void> {
-    await db
-      .delete(userTasks)
-      .where(
-        and(
-          eq(userTasks.userId, userId),
-          eq(userTasks.canReset, true)
-        )
-      );
+  async resetDailyTasks(userId: string): Promise<void> {
+    // Implementation for resetting daily tasks
+    // This would typically mark tasks as ready to be completed again
   }
 
-  async getUserTokenBalances(userId: number): Promise<TokenBalance[]> {
+  // Token balance operations
+  async getUserTokenBalances(userId: string): Promise<TokenBalance[]> {
     return await db.select().from(tokenBalances).where(eq(tokenBalances.userId, userId));
   }
 
-  async updateTokenBalance(userId: number, tokenSymbol: string, balance: number): Promise<TokenBalance> {
-    // Check if balance already exists
-    const [existing] = await db
-      .select()
-      .from(tokenBalances)
-      .where(
-        and(
-          eq(tokenBalances.userId, userId),
-          eq(tokenBalances.tokenSymbol, tokenSymbol)
-        )
-      );
+  async updateTokenBalance(userId: string, tokenSymbol: string, balance: number): Promise<TokenBalance> {
+    const existing = await db.select().from(tokenBalances).where(
+      and(
+        eq(tokenBalances.userId, userId),
+        eq(tokenBalances.tokenSymbol, tokenSymbol)
+      )
+    );
 
-    if (existing) {
+    if (existing.length > 0) {
       const [updated] = await db
         .update(tokenBalances)
         .set({ balance })
-        .where(eq(tokenBalances.id, existing.id))
+        .where(eq(tokenBalances.id, existing[0].id))
         .returning();
       return updated;
+    } else {
+      const [newBalance] = await db
+        .insert(tokenBalances)
+        .values({
+          userId,
+          tokenSymbol,
+          balance,
+          chainType: tokenSymbol === "SLERF" ? "base" : "solana",
+        })
+        .returning();
+      return newBalance;
     }
-
-    const [newBalance] = await db
-      .insert(tokenBalances)
-      .values({
-        userId,
-        tokenSymbol,
-        balance,
-        chainType: tokenSymbol === "SLERF" ? "base" : "solana"
-      })
-      .returning();
-    
-    return newBalance;
   }
 
+  // Referral operations
   async createReferral(insertReferral: InsertReferral): Promise<Referral> {
     const [referral] = await db
       .insert(referrals)
       .values({
-        referrerId: insertReferral.referrerId,
-        referredUserId: insertReferral.referredUserId,
-        rewardEarned: insertReferral.rewardEarned || 30
+        ...insertReferral,
+        createdAt: new Date(),
       })
       .returning();
-    
-    // Update referrer stats
-    if (referral.referrerId) {
-      const referrer = await this.getUser(referral.referrerId);
-      if (referrer) {
-        await this.updateUser(referrer.id, {
-          referralCount: (referrer.referralCount || 0) + 1,
-          referralEarnings: (referrer.referralEarnings || 0) + (referral.rewardEarned || 30),
-          pendingRewards: (referrer.pendingRewards || 0) + (referral.rewardEarned || 30)
-        });
-        
-        // Create activity
-        await this.createActivity({
-          userId: referrer.id,
-          type: "referral_earned",
-          description: "Earned referral bonus",
-          reward: referral.rewardEarned || 30
-        });
-      }
-    }
-    
     return referral;
   }
 
-  async getUserReferrals(userId: number): Promise<Referral[]> {
+  async getUserReferrals(userId: string): Promise<Referral[]> {
     return await db.select().from(referrals).where(eq(referrals.referrerId, userId));
   }
 
+  // Activity operations
   async createActivity(insertActivity: InsertActivity): Promise<Activity> {
     const [activity] = await db
       .insert(activities)
       .values({
-        userId: insertActivity.userId,
-        type: insertActivity.type,
-        description: insertActivity.description,
-        reward: insertActivity.reward
+        ...insertActivity,
+        createdAt: new Date(),
       })
       .returning();
     return activity;
   }
 
-  async getUserActivities(userId: number, limit = 10): Promise<Activity[]> {
-    return await db
-      .select()
-      .from(activities)
+  async getUserActivities(userId: string, limit = 10): Promise<Activity[]> {
+    return await db.select().from(activities)
       .where(eq(activities.userId, userId))
-      .orderBy(activities.createdAt)
       .limit(limit);
   }
 
-  async claimRewards(userId: number): Promise<{ claimed: number }> {
+  // Claims
+  async claimRewards(userId: string): Promise<{ claimed: number }> {
     const user = await this.getUser(userId);
     if (!user) {
       throw new Error("User not found");
     }
 
-    const claimed = user.pendingRewards || 0;
-    await this.updateUser(userId, { pendingRewards: 0 });
+    const pendingRewards = user.pendingRewards || 0;
     
-    // Update token balance
-    const balances = await this.getUserTokenBalances(userId);
-    const slerfBalance = balances.find(b => b.tokenSymbol === "SLERF");
-    await this.updateTokenBalance(userId, "SLERF", (slerfBalance?.balance || 0) + claimed);
-    
-    // Create activity
-    await this.createActivity({
-      userId,
-      type: "tokens_claimed",
-      description: `Claimed ${claimed} $SLERF tokens`,
-      reward: claimed
-    });
+    if (pendingRewards > 0) {
+      await this.updateUser(userId, {
+        pendingRewards: 0,
+        totalRewards: (user.totalRewards || 0) + pendingRewards,
+      });
 
-    return { claimed };
+      // Log the claim activity
+      await this.createActivity({
+        userId,
+        type: "tokens_claimed",
+        description: `Claimed ${pendingRewards} tokens`,
+        reward: pendingRewards,
+      });
+    }
+
+    return { claimed: pendingRewards };
   }
 }
 

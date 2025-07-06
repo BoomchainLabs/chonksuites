@@ -1,318 +1,364 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertUserSchema, insertUserTaskSchema, insertReferralSchema } from "@shared/schema";
-import { z } from "zod";
+import { setupAuth, isAuthenticated } from "./replitAuth";
+import { getDailyTriviaQuestion, checkTriviaCompletedToday, miningGame, predictionGame } from "./slerf-games";
 import { web3Service } from "./web3-service";
-import { 
-  getDailyTriviaQuestion, 
-  checkTriviaCompletedToday, 
-  miningGame, 
-  predictionGame 
-} from "./slerf-games";
+import { insertUserTaskSchema, insertActivitySchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  
-  // Connect wallet and create/get user
-  app.post("/api/connect-wallet", async (req, res) => {
+  // Auth middleware
+  await setupAuth(app);
+
+  // Auth routes
+  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
-      const { walletAddress, chainType } = insertUserSchema.parse(req.body);
-      
-      let user = await storage.getUserByWalletAddress(walletAddress);
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+  // Dashboard endpoint
+  app.get("/api/dashboard", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
       
       if (!user) {
-        // Create new user
-        user = await storage.createUser({
-          walletAddress,
-          chainType,
-          username: `User_${walletAddress.slice(0, 6)}`,
-          lastLoginAt: new Date()
-        });
-      } else {
-        // Update last login and streak
-        const lastLogin = user.lastLoginAt;
-        const now = new Date();
-        const daysSinceLastLogin = lastLogin 
-          ? Math.floor((now.getTime() - lastLogin.getTime()) / (1000 * 60 * 60 * 24))
-          : 0;
-        
-        let newStreak = user.loginStreak || 0;
-        if (daysSinceLastLogin === 1) {
-          newStreak += 1;
-        } else if (daysSinceLastLogin > 1) {
-          newStreak = 1;
-        }
-        
-        user = await storage.updateUser(user.id, {
-          lastLoginAt: now,
-          loginStreak: newStreak,
-          loyaltyScore: Math.min(100, Math.floor(
-            (newStreak * 5) + 
-            (user.referralCount || 0) * 3 + 
-            (user.tasksCompleted || 0) * 2 +
-            Math.min(50, Math.floor(((now.getTime() - (user.createdAt?.getTime() || now.getTime())) / (1000 * 60 * 60 * 24 * 365)) * 20))
-          ))
-        });
+        return res.status(404).json({ message: "User not found" });
       }
-      
-      const stats = await storage.getUserStats(user.id);
-      
-      // Get user token balances - combine stored and real blockchain data
-      let tokenBalances = await storage.getUserTokenBalances(user.id);
-      
-      // Try to get real blockchain balances
-      try {
-        const realBalances = await web3Service.getTokenBalances(user.walletAddress, user.chainType);
-        
-        // Update stored balances with real data
-        for (const realBalance of realBalances) {
-          await storage.updateTokenBalance(user.id, realBalance.tokenSymbol, realBalance.balance);
-        }
-        
-        // Get updated balances
-        tokenBalances = await storage.getUserTokenBalances(user.id);
-      } catch (error) {
-        console.log('Using stored token balances due to Web3 error:', error);
-      }
-      
+
+      const [tokenBalances, stats, tasks, completedTasksToday, activities] = await Promise.all([
+        storage.getUserTokenBalances(userId),
+        storage.getUserStats(userId),
+        storage.getAllTasks(),
+        storage.getCompletedTasksToday(userId),
+        storage.getUserActivities(userId, 5)
+      ]);
+
+      const completedTaskIds = completedTasksToday.map(task => task.taskId).filter(Boolean);
+
       res.json({
         user,
+        tokenBalances,
         stats,
-        tokenBalances
+        tasks,
+        completedTaskIds,
+        activities
       });
     } catch (error) {
-      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid request" });
+      console.error("Dashboard error:", error);
+      res.status(500).json({ message: "Failed to load dashboard" });
     }
   });
 
-  // Get all available tasks
-  app.get("/api/tasks", async (req, res) => {
+  // Task completion
+  app.post("/api/tasks/complete", isAuthenticated, async (req: any, res) => {
     try {
-      const tasks = await storage.getAllTasks();
-      res.json(tasks);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch tasks" });
-    }
-  });
+      const userId = req.user.claims.sub;
+      const { taskId } = req.body;
 
-  // Get user's task completion status
-  app.get("/api/tasks/status/:userId", async (req, res) => {
-    try {
-      const userId = parseInt(req.params.userId);
-      const userTasks = await storage.getUserTasks(userId);
-      const completedToday = await storage.getCompletedTasksToday(userId);
-      
-      res.json({
-        userTasks,
-        completedToday: completedToday.map(ut => ut.taskId)
-      });
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch task status" });
-    }
-  });
-
-  // Complete a task
-  app.post("/api/tasks/complete", async (req, res) => {
-    try {
-      const { userId, taskId } = insertUserTaskSchema.parse(req.body);
-      
-      // Check if task was already completed today
-      const completedToday = await storage.getCompletedTasksToday(userId!);
-      const alreadyCompleted = completedToday.some(ut => ut.taskId === taskId);
-      
-      if (alreadyCompleted) {
-        return res.status(400).json({ error: "Task already completed today" });
+      const task = await storage.getTask(taskId);
+      if (!task) {
+        return res.status(404).json({ message: "Task not found" });
       }
+
+      // Check if already completed today
+      const completedToday = await storage.getCompletedTasksToday(userId);
+      const alreadyCompleted = completedToday.some(ct => ct.taskId === taskId);
       
+      if (alreadyCompleted && task.taskType === "daily") {
+        return res.status(400).json({ message: "Task already completed today" });
+      }
+
+      // Complete the task
       const userTask = await storage.completeUserTask({
         userId,
         taskId,
-        canReset: true
       });
-      
-      const task = await storage.getTask(taskId!);
-      
-      res.json({
-        userTask,
-        reward: task?.reward || 0,
-        message: `Task completed! Earned ${task?.reward || 0} $SLERF`
-      });
-    } catch (error) {
-      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid request" });
-    }
-  });
 
-  // Register referral
-  app.post("/api/referral/register", async (req, res) => {
-    try {
-      const { referrerId, referredUserId } = insertReferralSchema.parse(req.body);
-      
-      // Check if referral already exists
-      const existingReferrals = await storage.getUserReferrals(referrerId!);
-      const alreadyReferred = existingReferrals.some(r => r.referredUserId === referredUserId);
-      
-      if (alreadyReferred) {
-        return res.status(400).json({ error: "User already referred" });
-      }
-      
-      const referral = await storage.createReferral({
-        referrerId,
-        referredUserId,
-        rewardEarned: 30
-      });
-      
-      res.json({
-        referral,
-        message: "Referral registered successfully! Earned 30 $SLERF"
-      });
-    } catch (error) {
-      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid request" });
-    }
-  });
-
-  // Get referral stats
-  app.get("/api/referral/stats/:userId", async (req, res) => {
-    try {
-      const userId = parseInt(req.params.userId);
-      const referrals = await storage.getUserReferrals(userId);
+      // Update user rewards
       const user = await storage.getUser(userId);
-      
-      res.json({
-        totalReferrals: referrals.length,
-        totalEarnings: user?.referralEarnings || 0,
-        conversionRate: referrals.length > 0 ? 68 : 0, // Mock conversion rate
-        referralLink: `https://chonk9k.com/ref/${user?.walletAddress || 'unknown'}`
-      });
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch referral stats" });
-    }
-  });
-
-  // Get loyalty score
-  app.get("/api/loyalty-score/:userId", async (req, res) => {
-    try {
-      const userId = parseInt(req.params.userId);
-      const user = await storage.getUser(userId);
-      
-      if (!user) {
-        return res.status(404).json({ error: "User not found" });
+      if (user) {
+        await storage.updateUser(userId, {
+          pendingRewards: (user.pendingRewards || 0) + task.reward,
+          tasksCompleted: (user.tasksCompleted || 0) + 1,
+        });
       }
-      
-      // Calculate wallet age in years
-      const walletAge = user.createdAt 
-        ? Math.floor((Date.now() - user.createdAt.getTime()) / (1000 * 60 * 60 * 24 * 365) * 10) / 10
-        : 0;
-      
-      res.json({
-        loyaltyScore: user.loyaltyScore || 0,
-        factors: {
-          loginStreak: user.loginStreak || 0,
-          walletAge,
-          referralCount: user.referralCount || 0,
-          tasksCompleted: user.tasksCompleted || 0
-        }
+
+      // Log activity
+      await storage.createActivity({
+        userId,
+        type: "task_completed",
+        description: `Completed: ${task.name}`,
+        reward: task.reward,
+      });
+
+      res.json({ 
+        success: true, 
+        reward: task.reward,
+        userTask 
       });
     } catch (error) {
-      res.status(500).json({ error: "Failed to fetch loyalty score" });
+      console.error("Task completion error:", error);
+      res.status(500).json({ message: "Failed to complete task" });
     }
   });
 
   // Claim rewards
-  app.post("/api/claim", async (req, res) => {
+  app.post("/api/claim", isAuthenticated, async (req: any, res) => {
     try {
-      const { userId } = z.object({ userId: z.number() }).parse(req.body);
-      
+      const userId = req.user.claims.sub;
       const result = await storage.claimRewards(userId);
+      res.json(result);
+    } catch (error) {
+      console.error("Claim rewards error:", error);
+      res.status(500).json({ message: "Failed to claim rewards" });
+    }
+  });
+
+  // Referral endpoints
+  app.get("/api/referral/stats", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const referrals = await storage.getUserReferrals(userId);
       
       res.json({
-        claimed: result.claimed,
-        message: `Successfully claimed ${result.claimed} $SLERF tokens!`
+        totalReferrals: referrals.length,
+        totalEarnings: referrals.reduce((sum, r) => sum + (r.rewardEarned || 0), 0),
+        referrals: referrals
       });
     } catch (error) {
-      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid request" });
+      console.error("Referral stats error:", error);
+      res.status(500).json({ message: "Failed to get referral stats" });
     }
   });
 
-  // Get user activities
-  app.get("/api/activities/:userId", async (req, res) => {
+  // Loyalty score
+  app.get("/api/loyalty-score", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = parseInt(req.params.userId);
-      const activities = await storage.getUserActivities(userId, 10);
-      
-      res.json(activities);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch activities" });
-    }
-  });
-
-  // Get user dashboard data
-  app.get("/api/dashboard/:userId", async (req, res) => {
-    try {
-      const userId = parseInt(req.params.userId);
-      
-      const user = await storage.getUser(userId);
-      if (!user) {
-        return res.status(404).json({ error: "User not found" });
-      }
-      
+      const userId = req.user.claims.sub;
       const stats = await storage.getUserStats(userId);
-      const tokenBalances = await storage.getUserTokenBalances(userId);
-      const activities = await storage.getUserActivities(userId, 5);
-      const tasks = await storage.getAllTasks();
-      const completedToday = await storage.getCompletedTasksToday(userId);
-      
-      res.json({
-        user,
-        stats,
-        tokenBalances,
-        activities,
-        tasks,
-        completedTaskIds: completedToday.map(ut => ut.taskId)
-      });
+      res.json(stats);
     } catch (error) {
-      res.status(500).json({ error: "Failed to fetch dashboard data" });
+      console.error("Loyalty score error:", error);
+      res.status(500).json({ message: "Failed to get loyalty score" });
     }
   });
 
-  // Get real-time Web3 network status
-  app.get("/api/web3/status", async (req, res) => {
+  // Daily trivia endpoints
+  app.get("/api/trivia/today", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const question = getDailyTriviaQuestion(parseInt(userId));
+      const completedToday = await checkTriviaCompletedToday(parseInt(userId));
+      
+      res.json({
+        question,
+        completedToday,
+        todayReward: question.reward,
+        currentStreak: 0 // You can implement streak tracking
+      });
+    } catch (error) {
+      console.error("Trivia error:", error);
+      res.status(500).json({ message: "Failed to get trivia question" });
+    }
+  });
+
+  app.post("/api/trivia/answer", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { questionId, selectedAnswer } = req.body;
+      
+      const question = getDailyTriviaQuestion(parseInt(userId));
+      const isCorrect = question.correctAnswer === selectedAnswer;
+      
+      if (isCorrect) {
+        const user = await storage.getUser(userId);
+        if (user) {
+          await storage.updateUser(userId, {
+            pendingRewards: (user.pendingRewards || 0) + question.reward,
+          });
+        }
+
+        await storage.createActivity({
+          userId,
+          type: "trivia_completed",
+          description: `Answered trivia correctly`,
+          reward: question.reward,
+        });
+      }
+
+      res.json({
+        correct: isCorrect,
+        reward: isCorrect ? question.reward : 0,
+        explanation: `The correct answer was: ${question.options[question.correctAnswer]}`
+      });
+    } catch (error) {
+      console.error("Trivia answer error:", error);
+      res.status(500).json({ message: "Failed to submit trivia answer" });
+    }
+  });
+
+  // Mining game endpoints
+  app.post("/api/mining/start", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const session = miningGame.startMiningSession(parseInt(userId));
+      res.json(session);
+    } catch (error) {
+      console.error("Mining start error:", error);
+      res.status(500).json({ message: "Failed to start mining session" });
+    }
+  });
+
+  app.post("/api/mining/complete", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { sessionId, clickCount } = req.body;
+      
+      const result = miningGame.completeMiningSession(sessionId, clickCount);
+      
+      if (result.reward > 0) {
+        const user = await storage.getUser(userId);
+        if (user) {
+          await storage.updateUser(userId, {
+            pendingRewards: (user.pendingRewards || 0) + result.reward,
+          });
+        }
+
+        await storage.createActivity({
+          userId,
+          type: "mining_completed",
+          description: `Mined ${result.reward} SLERF tokens`,
+          reward: result.reward,
+        });
+      }
+
+      res.json(result);
+    } catch (error) {
+      console.error("Mining complete error:", error);
+      res.status(500).json({ message: "Failed to complete mining session" });
+    }
+  });
+
+  app.get("/api/mining/status", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const status = miningGame.getUserMiningStatus(parseInt(userId));
+      res.json(status);
+    } catch (error) {
+      console.error("Mining status error:", error);
+      res.status(500).json({ message: "Failed to get mining status" });
+    }
+  });
+
+  // Prediction game endpoints
+  app.get("/api/prediction/round", isAuthenticated, async (req: any, res) => {
+    try {
+      const round = predictionGame.getCurrentRound();
+      res.json(round);
+    } catch (error) {
+      console.error("Prediction round error:", error);
+      res.status(500).json({ message: "Failed to get prediction round" });
+    }
+  });
+
+  app.post("/api/prediction/submit", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { direction, amount } = req.body;
+      
+      const result = predictionGame.submitPrediction(parseInt(userId), direction, amount);
+      res.json(result);
+    } catch (error) {
+      console.error("Prediction submit error:", error);
+      res.status(500).json({ message: "Failed to submit prediction" });
+    }
+  });
+
+  app.get("/api/prediction/user", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const prediction = predictionGame.getUserPrediction(parseInt(userId));
+      res.json(prediction);
+    } catch (error) {
+      console.error("User prediction error:", error);
+      res.status(500).json({ message: "Failed to get user prediction" });
+    }
+  });
+
+  // Web3 integration endpoints
+  app.post("/api/web3/validate-wallet", isAuthenticated, async (req: any, res) => {
+    try {
+      const { address, chainType } = req.body;
+      const isValid = await web3Service.validateWalletAddress(address, chainType);
+      res.json({ valid: isValid });
+    } catch (error) {
+      console.error("Wallet validation error:", error);
+      res.status(500).json({ message: "Failed to validate wallet" });
+    }
+  });
+
+  app.get("/api/web3/token-balances/:address/:chainType", isAuthenticated, async (req: any, res) => {
+    try {
+      const { address, chainType } = req.params;
+      const balances = await web3Service.getTokenBalances(address, chainType);
+      res.json(balances);
+    } catch (error) {
+      console.error("Token balance error:", error);
+      res.status(500).json({ message: "Failed to get token balances" });
+    }
+  });
+
+  app.get("/api/web3/network-status", async (req, res) => {
     try {
       const status = await web3Service.getNetworkStatus();
       res.json(status);
     } catch (error) {
-      res.status(500).json({ error: "Failed to fetch network status" });
+      console.error("Network status error:", error);
+      res.status(500).json({ message: "Failed to get network status" });
     }
   });
 
-  // Validate wallet address
-  app.post("/api/web3/validate", async (req, res) => {
-    try {
-      const { address, chainType } = req.body;
-      const isValid = await web3Service.validateWalletAddress(address, chainType);
-      res.json({ isValid });
-    } catch (error) {
-      res.status(400).json({ error: "Invalid validation request" });
-    }
-  });
-
-  // Get current token prices
-  app.get("/api/web3/prices", async (req, res) => {
+  app.get("/api/web3/token-prices", async (req, res) => {
     try {
       const prices = await web3Service.getTokenPrices();
       res.json(prices);
     } catch (error) {
-      res.status(500).json({ error: "Failed to fetch token prices" });
+      console.error("Token prices error:", error);
+      res.status(500).json({ message: "Failed to get token prices" });
     }
   });
 
-  // Get real token balances for a wallet
-  app.post("/api/web3/balances", async (req, res) => {
+  // Connect wallet (now updates existing authenticated user)
+  app.post("/api/connect-wallet", isAuthenticated, async (req: any, res) => {
     try {
+      const userId = req.user.claims.sub;
       const { walletAddress, chainType } = req.body;
-      const balances = await web3Service.getTokenBalances(walletAddress, chainType);
-      res.json(balances);
+      
+      // Update the authenticated user with wallet information
+      const user = await storage.updateUser(userId, {
+        walletAddress,
+        chainType,
+        lastLoginAt: new Date()
+      });
+
+      // Initialize token balances if new wallet
+      const existingBalances = await storage.getUserTokenBalances(userId);
+      if (existingBalances.length === 0) {
+        await storage.updateTokenBalance(userId, "SLERF", 1247);
+        await storage.updateTokenBalance(userId, "CHONKPUMP", 892);
+      }
+
+      res.json({ success: true, user });
     } catch (error) {
-      res.status(500).json({ error: "Failed to fetch token balances" });
+      console.error("Wallet connection error:", error);
+      res.status(500).json({ message: "Failed to connect wallet" });
     }
   });
 
