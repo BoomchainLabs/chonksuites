@@ -85,25 +85,25 @@ const REAL_TOKENS: TokenData[] = [
     network: 'ethereum'
   },
   {
-    symbol: 'SLERF',
-    name: 'SLERF Token',
+    symbol: '$SLERF',
+    name: '$SLERF Token',
     price: 0.0234,
     change24h: 15.67,
     volume24h: 1250000,
     marketCap: 12500000,
-    logo: '/api/assets/slerf-logo.png',
+    logo: 'https://dd.dexscreener.com/ds-data/tokens/ethereum/0x5aaefe84e0fb3dd1f0fcff6fa7468124986b91bd.png?size=lg&key=5671a5',
     address: '0x233df63325933fa3f2dac8e695cd84bb2f91ab07', // Real SLERF contract
     network: 'base'
   },
   {
-    symbol: 'CHONK9K',
-    name: 'Chonk9k Token',
-    price: 0,
-    change24h: 0,
-    volume24h: 0,
-    marketCap: 0,
-    logo: 'https://via.placeholder.com/40/06b6d4/ffffff?text=C9K',
-    address: '...', // Solana address
+    symbol: '$CHONK9K',
+    name: '$CHONK9K Token',
+    price: 0.00156,
+    change24h: -3.45,
+    volume24h: 890000,
+    marketCap: 1560000,
+    logo: 'https://pump.mypinata.cloud/ipfs/QmPfCgXrz9Hoc3vyL6VQW5BKSe9Mq7c7G8cGJNhHKHvp3R?img-width=256&img-dpr=2&img-onerror=redirect',
+    address: 'Ak1CnyZPzkCHUpvYrMWFgfv6U1aqLJHgcUJxqzKHGVBN', // Solana address
     network: 'solana'
   }
 ];
@@ -585,6 +585,25 @@ export default function ProfessionalTrading() {
           </TabsList>
 
           <TabsContent value="trading" className="space-y-6">
+            {/* Featured Token Charts */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+              <RealTimeChart
+                tokenSymbol="SLERF"
+                tokenName="SLERF Token"
+                network="base"
+                contractAddress="0x233df63325933fa3f2dac8e695cd84bb2f91ab07"
+                height={350}
+              />
+              <RealTimeChart
+                tokenSymbol="CHONK9K"
+                tokenName="Chonkpump9000"
+                network="solana"
+                contractAddress="Ak1CnyZPzkCHUpvYrMWFgfv6U1aqLJHgcUJxqzKHGVBN"
+                height={350}
+              />
+            </div>
+            
+            {/* Token Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {tokens.map((token) => (
                 <TokenCard

@@ -2,6 +2,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Chonk9kLogo from "@/components/chonk9k-logo";
+import TokenMascot from "@/components/token-mascots";
+import MascotShowcase from "@/components/mascot-showcase";
 import { ArrowRight, Shield, TrendingUp, Zap, Globe, Users, Award, Rocket, CheckCircle, Star, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 
