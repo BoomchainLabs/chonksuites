@@ -2,7 +2,7 @@
 
 ## Overview
 
-This is a full-stack web application built with React, TypeScript, and Express.js that implements a gamified rewards system with wallet integration. The application features a token-based rewards system where users can complete daily tasks, earn loyalty points, and participate in a referral program. The frontend uses modern UI components from shadcn/ui with a custom gaming aesthetic, while the backend provides REST API endpoints for user management, task completion, and reward tracking.
+This is a full-stack Web3 loyalty dashboard called "Chonk9k Suite" built with React, TypeScript, and Express.js. It implements a gamified rewards system with dual-chain wallet integration supporting both Base (EVM) and Solana networks. Users earn $LERF tokens (Base Chain) and $CHONK9K tokens (Solana) for completing daily tasks, referrals, and loyalty activities. The platform features a Nintendo-style gaming aesthetic with comprehensive Web3 CLI tools for real blockchain operations.
 
 ## System Architecture
 
@@ -111,6 +111,7 @@ This is a full-stack web application built with React, TypeScript, and Express.j
 Changelog:
 - July 06, 2025. Initial setup
 - July 06, 2025. Added PostgreSQL database with Drizzle ORM, migrated from in-memory storage to persistent database storage
+- July 06, 2025. Integrated comprehensive Web3 CLI tools for SLERF/CHONKPUMP token management, real blockchain connectivity, and network monitoring
 
 ## User Preferences
 

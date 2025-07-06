@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertUserSchema, insertUserTaskSchema, insertReferralSchema } from "@shared/schema";
 import { z } from "zod";
+import { web3Service } from "./web3-service";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
@@ -49,7 +50,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const stats = await storage.getUserStats(user.id);
-      const tokenBalances = await storage.getUserTokenBalances(user.id);
+      
+      // Get user token balances - combine stored and real blockchain data
+      let tokenBalances = await storage.getUserTokenBalances(user.id);
+      
+      // Try to get real blockchain balances
+      try {
+        const realBalances = await web3Service.getTokenBalances(user.walletAddress, user.chainType);
+        
+        // Update stored balances with real data
+        for (const realBalance of realBalances) {
+          await storage.updateTokenBalance(user.id, realBalance.tokenSymbol, realBalance.balance);
+        }
+        
+        // Get updated balances
+        tokenBalances = await storage.getUserTokenBalances(user.id);
+      } catch (error) {
+        console.log('Using stored token balances due to Web3 error:', error);
+      }
       
       res.json({
         user,
@@ -247,6 +265,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch dashboard data" });
+    }
+  });
+
+  // Get real-time Web3 network status
+  app.get("/api/web3/status", async (req, res) => {
+    try {
+      const status = await web3Service.getNetworkStatus();
+      res.json(status);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch network status" });
+    }
+  });
+
+  // Validate wallet address
+  app.post("/api/web3/validate", async (req, res) => {
+    try {
+      const { address, chainType } = req.body;
+      const isValid = await web3Service.validateWalletAddress(address, chainType);
+      res.json({ isValid });
+    } catch (error) {
+      res.status(400).json({ error: "Invalid validation request" });
+    }
+  });
+
+  // Get current token prices
+  app.get("/api/web3/prices", async (req, res) => {
+    try {
+      const prices = await web3Service.getTokenPrices();
+      res.json(prices);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch token prices" });
+    }
+  });
+
+  // Get real token balances for a wallet
+  app.post("/api/web3/balances", async (req, res) => {
+    try {
+      const { walletAddress, chainType } = req.body;
+      const balances = await web3Service.getTokenBalances(walletAddress, chainType);
+      res.json(balances);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch token balances" });
     }
   });
 

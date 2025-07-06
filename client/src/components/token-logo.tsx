@@ -14,14 +14,14 @@ export default function TokenLogo({ tokenSymbol, size = "md", className = "" }: 
     lg: "w-12 h-12"
   };
 
-  const logoSrc = tokenSymbol === "SLERF" ? slerfLogo : 
-                  tokenSymbol === "CHONKPUMP" ? chonkpumpLogo : 
+  const logoSrc = (tokenSymbol === "SLERF" || tokenSymbol === "LERF") ? slerfLogo : 
+                  (tokenSymbol === "CHONKPUMP" || tokenSymbol === "CHONK9K") ? chonkpumpLogo : 
                   null;
 
   if (!logoSrc) {
     // Fallback to initial letter if no logo found
-    const bgColor = tokenSymbol === "SLERF" ? "bg-gradient-to-br from-green-400 to-blue-500" :
-                    tokenSymbol === "CHONKPUMP" ? "bg-gradient-to-br from-orange-400 to-red-500" :
+    const bgColor = (tokenSymbol === "SLERF" || tokenSymbol === "LERF") ? "bg-gradient-to-br from-green-400 to-blue-500" :
+                    (tokenSymbol === "CHONKPUMP" || tokenSymbol === "CHONK9K") ? "bg-gradient-to-br from-orange-400 to-red-500" :
                     "bg-gradient-to-br from-purple-400 to-pink-500";
     
     return (

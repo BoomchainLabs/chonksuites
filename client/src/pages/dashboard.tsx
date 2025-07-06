@@ -10,6 +10,7 @@ import LoyaltyScore from "@/components/loyalty-score";
 import ReferralSystem from "@/components/referral-system";
 import ClaimRewards from "@/components/claim-rewards";
 import TokenLogo from "@/components/token-logo";
+import Web3Status from "@/components/web3-status";
 import { apiRequest } from "@/lib/queryClient";
 import { formatTime } from "@/lib/wallet-utils";
 import { useToast } from "@/hooks/use-toast";
@@ -26,11 +27,11 @@ export default function Dashboard() {
   });
 
   // Type-safe access to dashboard data
-  const tokenBalances = dashboardData?.tokenBalances || [];
-  const stats = dashboardData?.stats || {};
-  const tasks = dashboardData?.tasks || [];
-  const completedTaskIds = dashboardData?.completedTaskIds || [];
-  const activities = dashboardData?.activities || [];
+  const tokenBalances = (dashboardData as any)?.tokenBalances || [];
+  const stats = (dashboardData as any)?.stats || {};
+  const tasks = (dashboardData as any)?.tasks || [];
+  const completedTaskIds = (dashboardData as any)?.completedTaskIds || [];
+  const activities = (dashboardData as any)?.activities || [];
 
   const connectWalletMutation = useMutation({
     mutationFn: async (walletData: { address: string; chainType: string }) => {
@@ -273,38 +274,8 @@ export default function Dashboard() {
             {/* Referral System */}
             <ReferralSystem userId={user?.id} />
 
-            {/* Wallet Status */}
-            <Card className="glass-card border-purple-500/30">
-              <CardHeader>
-                <CardTitle className="text-lg font-orbitron font-bold">Wallet Status</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
-                        <span className="text-white text-xs">B</span>
-                      </div>
-                      <span className="text-sm">Base Chain</span>
-                    </div>
-                    <Badge className="bg-green-500/20 text-green-400">
-                      Connected
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center">
-                        <span className="text-white text-xs">S</span>
-                      </div>
-                      <span className="text-sm">Solana</span>
-                    </div>
-                    <Badge variant="secondary" className="bg-gray-400/20 text-gray-400">
-                      Disconnected
-                    </Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Web3 Status */}
+            <Web3Status />
 
             {/* Recent Activity */}
             <Card className="glass-card border-purple-500/30">
