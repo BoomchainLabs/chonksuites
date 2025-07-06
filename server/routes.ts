@@ -209,6 +209,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Authentic token data API endpoint
+  app.get("/api/tokens/authentic", async (req, res) => {
+    try {
+      const tokenData = await authenticTokenService.getAllTokenData();
+      res.json(tokenData);
+    } catch (error) {
+      console.error("Error fetching authentic token data:", error);
+      res.status(500).json({ message: "Failed to fetch token data" });
+    }
+  });
+
   app.post("/api/staking/stake", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
