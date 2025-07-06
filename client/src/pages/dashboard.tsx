@@ -9,6 +9,7 @@ import DailyTasks from "@/components/daily-tasks";
 import LoyaltyScore from "@/components/loyalty-score";
 import ReferralSystem from "@/components/referral-system";
 import ClaimRewards from "@/components/claim-rewards";
+import TokenLogo from "@/components/token-logo";
 import { apiRequest } from "@/lib/queryClient";
 import { formatTime } from "@/lib/wallet-utils";
 import { useToast } from "@/hooks/use-toast";
@@ -23,6 +24,13 @@ export default function Dashboard() {
     queryKey: ['/api/dashboard', user?.id],
     enabled: !!user?.id,
   });
+
+  // Type-safe access to dashboard data
+  const tokenBalances = dashboardData?.tokenBalances || [];
+  const stats = dashboardData?.stats || {};
+  const tasks = dashboardData?.tasks || [];
+  const completedTaskIds = dashboardData?.completedTaskIds || [];
+  const activities = dashboardData?.activities || [];
 
   const connectWalletMutation = useMutation({
     mutationFn: async (walletData: { address: string; chainType: string }) => {
@@ -95,6 +103,10 @@ export default function Dashboard() {
                     CHONK9K SUITE
                   </h1>
                   <p className="text-sm text-gray-400">Web3 Loyalty & Rewards</p>
+                </div>
+                <div className="hidden lg:flex items-center space-x-2 ml-6">
+                  <TokenLogo tokenSymbol="SLERF" size="sm" />
+                  <TokenLogo tokenSymbol="CHONKPUMP" size="sm" />
                 </div>
               </div>
               <WalletConnect
@@ -176,9 +188,13 @@ export default function Dashboard() {
                 </h1>
                 <p className="text-sm text-gray-400">Web3 Loyalty & Rewards</p>
               </div>
+              <div className="hidden lg:flex items-center space-x-2 ml-6">
+                <TokenLogo tokenSymbol="SLERF" size="sm" />
+                <TokenLogo tokenSymbol="CHONKPUMP" size="sm" />
+              </div>
             </div>
 
-            <TokenBalances balances={dashboardData?.tokenBalances || []} />
+            <TokenBalances balances={tokenBalances} />
 
             <WalletConnect
               onConnect={handleWalletConnect}
@@ -207,7 +223,7 @@ export default function Dashboard() {
                   <div className="text-right">
                     <p className="text-sm text-gray-400">Current Streak</p>
                     <p className="text-3xl font-bold text-green-400">
-                      {dashboardData?.stats?.loginStreak || 0}
+                      {stats.loginStreak || 0}
                     </p>
                   </div>
                 </div>
@@ -215,19 +231,19 @@ export default function Dashboard() {
                 <div className="grid grid-cols-3 gap-4 mt-6">
                   <div className="stat-card">
                     <p className="text-2xl font-bold text-purple-400">
-                      {dashboardData?.stats?.totalRewards || 0}
+                      {stats.totalRewards || 0}
                     </p>
                     <p className="text-sm text-gray-400">Total Rewards</p>
                   </div>
                   <div className="stat-card">
                     <p className="text-2xl font-bold text-green-400">
-                      {dashboardData?.stats?.referralCount || 0}
+                      {stats.referralCount || 0}
                     </p>
                     <p className="text-sm text-gray-400">Referrals</p>
                   </div>
                   <div className="stat-card">
                     <p className="text-2xl font-bold text-blue-400">
-                      {dashboardData?.stats?.tasksCompleted || 0}
+                      {stats.tasksCompleted || 0}
                     </p>
                     <p className="text-sm text-gray-400">Tasks Done</p>
                   </div>
@@ -237,15 +253,15 @@ export default function Dashboard() {
 
             {/* Daily Tasks */}
             <DailyTasks
-              tasks={dashboardData?.tasks || []}
-              completedTaskIds={dashboardData?.completedTaskIds || []}
+              tasks={tasks}
+              completedTaskIds={completedTaskIds}
               userId={user?.id}
             />
 
             {/* Claim Rewards */}
             <ClaimRewards
               userId={user?.id}
-              pendingRewards={dashboardData?.stats?.pendingRewards || 0}
+              pendingRewards={stats.pendingRewards || 0}
             />
           </div>
 
@@ -297,7 +313,7 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {dashboardData?.activities?.map((activity: any) => (
+                  {activities?.map((activity: any) => (
                     <div key={activity.id} className="activity-item">
                       <div className={`activity-icon ${getActivityIconColor(activity.type)}`}>
                         {getActivityIcon(activity.type)}
@@ -313,7 +329,7 @@ export default function Dashboard() {
                       </span>
                     </div>
                   ))}
-                  {(!dashboardData?.activities || dashboardData.activities.length === 0) && (
+                  {(!activities || activities.length === 0) && (
                     <p className="text-center text-gray-400 py-4">
                       No recent activity
                     </p>

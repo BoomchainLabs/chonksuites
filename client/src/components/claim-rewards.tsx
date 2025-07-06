@@ -4,6 +4,7 @@ import { Coins, Sparkles } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import TokenLogo from "@/components/token-logo";
 
 interface ClaimRewardsProps {
   userId: number;
@@ -54,7 +55,10 @@ export default function ClaimRewards({ userId, pendingRewards }: ClaimRewardsPro
                 </p>
                 <Sparkles className="w-6 h-6 text-yellow-400 ml-2 animate-spin-slow" />
               </div>
-              <p className="text-gray-400">$SLERF Available to Claim</p>
+              <div className="flex items-center justify-center space-x-2">
+                <TokenLogo tokenSymbol="SLERF" size="sm" />
+                <p className="text-gray-400">$SLERF Available to Claim</p>
+              </div>
             </div>
           </div>
           

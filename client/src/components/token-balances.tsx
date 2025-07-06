@@ -1,6 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { formatNumber } from "@/lib/wallet-utils";
 import { TokenBalance } from "@shared/schema";
+import TokenLogo from "@/components/token-logo";
 
 interface TokenBalancesProps {
   balances: TokenBalance[];
@@ -15,9 +16,7 @@ export default function TokenBalances({ balances }: TokenBalancesProps) {
       <Card className="glass-card border-purple-500/30 hover:neon-glow-hover transition-all duration-300">
         <CardContent className="px-3 py-2">
           <div className="flex items-center space-x-2">
-            <div className="token-logo bg-gradient-to-br from-green-400 to-blue-500">
-              <span>S</span>
-            </div>
+            <TokenLogo tokenSymbol="SLERF" />
             <div>
               <p className="text-sm font-medium text-green-400">$SLERF</p>
               <p className="text-xs text-gray-400">
@@ -31,9 +30,7 @@ export default function TokenBalances({ balances }: TokenBalancesProps) {
       <Card className="glass-card border-purple-500/30 hover:neon-glow-hover transition-all duration-300">
         <CardContent className="px-3 py-2">
           <div className="flex items-center space-x-2">
-            <div className="token-logo bg-gradient-to-br from-orange-400 to-red-500">
-              <span>C</span>
-            </div>
+            <TokenLogo tokenSymbol="CHONKPUMP" />
             <div>
               <p className="text-sm font-medium text-orange-400">$CHONKPUMP</p>
               <p className="text-xs text-gray-400">

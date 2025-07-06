@@ -139,17 +139,20 @@ export class MemStorage implements IStorage {
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.currentUserId++;
     const user: User = {
-      ...insertUser,
       id,
+      walletAddress: insertUser.walletAddress,
+      chainType: insertUser.chainType,
+      username: insertUser.username || null,
+      loginStreak: 1,
       totalRewards: 0,
       tasksCompleted: 0,
       referralCount: 0,
       loyaltyScore: 0,
       pendingRewards: 0,
       referralEarnings: 0,
-      loginStreak: 1,
       lastLoginAt: new Date(),
-      createdAt: new Date()
+      createdAt: new Date(),
+      referredBy: insertUser.referredBy || null
     };
     this.users.set(id, user);
     
@@ -206,7 +209,16 @@ export class MemStorage implements IStorage {
 
   async createTask(insertTask: InsertTask): Promise<Task> {
     const id = this.currentTaskId++;
-    const task: Task = { ...insertTask, id };
+    const task: Task = { 
+      id,
+      name: insertTask.name,
+      description: insertTask.description,
+      reward: insertTask.reward,
+      taskType: insertTask.taskType,
+      isActive: insertTask.isActive ?? true,
+      icon: insertTask.icon,
+      buttonText: insertTask.buttonText
+    };
     this.tasks.set(id, task);
     return task;
   }
@@ -220,9 +232,11 @@ export class MemStorage implements IStorage {
   async completeUserTask(insertUserTask: InsertUserTask): Promise<UserTask> {
     const id = this.currentUserTaskId++;
     const userTask: UserTask = {
-      ...insertUserTask,
       id,
+      userId: insertUserTask.userId || null,
+      taskId: insertUserTask.taskId || null,
       completedAt: new Date(),
+      canReset: insertUserTask.canReset ?? true,
       lastResetAt: new Date()
     };
     this.userTasks.set(id, userTask);
@@ -304,8 +318,10 @@ export class MemStorage implements IStorage {
   async createReferral(insertReferral: InsertReferral): Promise<Referral> {
     const id = this.currentReferralId++;
     const referral: Referral = {
-      ...insertReferral,
       id,
+      referrerId: insertReferral.referrerId || null,
+      referredUserId: insertReferral.referredUserId || null,
+      rewardEarned: insertReferral.rewardEarned || null,
       createdAt: new Date()
     };
     this.referrals.set(id, referral);
@@ -340,8 +356,11 @@ export class MemStorage implements IStorage {
   async createActivity(insertActivity: InsertActivity): Promise<Activity> {
     const id = this.currentActivityId++;
     const activity: Activity = {
-      ...insertActivity,
       id,
+      userId: insertActivity.userId || null,
+      type: insertActivity.type,
+      description: insertActivity.description,
+      reward: insertActivity.reward || null,
       createdAt: new Date()
     };
     this.activities.set(id, activity);
