@@ -22,6 +22,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Token balances endpoint
+  app.get('/api/token-balances/:userId', isAuthenticated, async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const balances = await storage.getUserTokenBalances(userId);
+      res.json(balances);
+    } catch (error) {
+      console.error("Error fetching token balances:", error);
+      res.status(500).json({ message: "Failed to fetch token balances" });
+    }
+  });
+
+  // User stats endpoint
+  app.get('/api/user-stats/:userId', isAuthenticated, async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const stats = await storage.getUserStats(userId);
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching user stats:", error);
+      res.status(500).json({ message: "Failed to fetch user stats" });
+    }
+  });
+
   // Dashboard endpoint
   app.get("/api/dashboard", isAuthenticated, async (req: any, res) => {
     try {
@@ -508,6 +532,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       res.status(500).json({ message: "Reward claiming failed" });
+    }
+  });
+
+  // One-click claim all rewards
+  app.post("/api/rewards/claim-all", isAuthenticated, async (req, res) => {
+    try {
+      const { userId } = req.body;
+      
+      // Simulate claiming from multiple sources
+      const stakingRewards = 1247.8;
+      const miningRewards = 892.5;
+      const taskRewards = 345.2;
+      const referralRewards = 198.7;
+      
+      const totalClaimed = stakingRewards + miningRewards + taskRewards + referralRewards;
+      
+      res.json({ 
+        success: true,
+        totalClaimed,
+        breakdown: {
+          staking: stakingRewards,
+          mining: miningRewards,
+          tasks: taskRewards,
+          referrals: referralRewards
+        },
+        message: "All rewards claimed successfully"
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to claim all rewards" });
     }
   });
 
