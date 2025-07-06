@@ -18,9 +18,9 @@ export default function SimpleDashboard() {
     enabled: !!user,
   });
 
-  const displayName = user && typeof user === 'object' && user.firstName && user.lastName 
+  const displayName = user && typeof user === 'object' && 'firstName' in user && 'lastName' in user && user.firstName && user.lastName 
     ? `${user.firstName} ${user.lastName}` 
-    : user && typeof user === 'object' && user.email ? user.email.split('@')[0] : 'Welcome';
+    : user && typeof user === 'object' && 'email' in user && user.email ? (user.email as string).split('@')[0] : 'Welcome';
 
   const handleLogin = () => {
     window.location.href = "/api/login";
@@ -92,7 +92,7 @@ export default function SimpleDashboard() {
               </CardHeader>
               <CardContent>
                 <p className="text-2xl font-bold text-purple-400 text-glow">
-                  {stats && typeof stats === 'object' && stats.slerfBalance ? stats.slerfBalance.toLocaleString() : '0'}
+                  {stats && typeof stats === 'object' && 'slerfBalance' in stats ? (stats.slerfBalance as number).toLocaleString() : '0'}
                 </p>
               </CardContent>
             </Card>
@@ -108,7 +108,7 @@ export default function SimpleDashboard() {
               </CardHeader>
               <CardContent>
                 <p className="text-2xl font-bold text-cyan-400 text-glow">
-                  {stats && typeof stats === 'object' && stats.chonkBalance ? stats.chonkBalance.toLocaleString() : '0'}
+                  {stats && typeof stats === 'object' && 'chonkBalance' in stats ? (stats.chonkBalance as number).toLocaleString() : '0'}
                 </p>
               </CardContent>
             </Card>
@@ -124,7 +124,7 @@ export default function SimpleDashboard() {
               </CardHeader>
               <CardContent>
                 <p className="text-2xl font-bold text-green-400 text-glow">
-                  {stats?.totalRewards?.toLocaleString() || '0'}
+                  {stats && typeof stats === 'object' && 'totalRewards' in stats ? (stats.totalRewards as number).toLocaleString() : '0'}
                 </p>
               </CardContent>
             </Card>
@@ -140,7 +140,7 @@ export default function SimpleDashboard() {
               </CardHeader>
               <CardContent>
                 <p className="text-2xl font-bold text-yellow-400 text-glow">
-                  {stats?.loyaltyScore || '0'}
+                  {stats && typeof stats === 'object' && 'loyaltyScore' in stats ? String(stats.loyaltyScore) : '0'}
                 </p>
               </CardContent>
             </Card>
