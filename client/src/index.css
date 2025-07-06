@@ -248,6 +248,18 @@
   @apply px-6 lg:px-8 xl:px-12;
 }
 
+/* Mining Game Animations */
+@keyframes floatUp {
+  0% { 
+    transform: translate(-50%, -50%) translateY(0px) scale(1); 
+    opacity: 1; 
+  }
+  100% { 
+    transform: translate(-50%, -50%) translateY(-60px) scale(1.2); 
+    opacity: 0; 
+  }
+}
+
 /* Mobile Optimizations */
 @media (max-width: 768px) {
   .glass-card {
