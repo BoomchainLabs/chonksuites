@@ -11,6 +11,7 @@ import DAOGovernance from "@/components/dao-governance";
 import MascotShowcase from "@/components/mascot-showcase";
 import SimplePlayground from "@/components/simple-playground";
 import HackerTerminal from "@/components/hacker-terminal";
+import CommunityAchievements from "@/components/community-achievements";
 import Landing from "@/pages/landing";
 import NotFound from "@/pages/not-found";
 
@@ -48,6 +49,7 @@ function Router() {
           <Route path="/trading" component={ProductionTradingDashboard} />
           <Route path="/slerf" component={SlerfTradingHub} />
           <Route path="/dao" component={DAOGovernance} />
+          <Route path="/achievements" component={CommunityAchievements} />
         </>
       )}
       <Route component={NotFound} />
