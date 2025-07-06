@@ -497,6 +497,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // SLERF Token API Endpoints
+  app.get("/api/slerf/info", async (req, res) => {
+    try {
+      const slerfData = {
+        name: "SLERF Token",
+        symbol: "SLERF",
+        address: "0x233df63325933fa3f2dac8e695cd84bb2f91ab07",
+        network: "base",
+        decimals: 18,
+        price: 0.0234,
+        change24h: 15.67,
+        volume24h: 1250000,
+        marketCap: 12500000,
+        holders: 15420,
+        liquidity: 450000
+      };
+      res.json(slerfData);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch SLERF data" });
+    }
+  });
+
+  app.get("/api/slerf/balance/:address", async (req, res) => {
+    try {
+      const { address } = req.params;
+      // Simulate Web3 balance check
+      const balance = Math.random() * 50000;
+      res.json({
+        address,
+        balance: balance.toFixed(6),
+        balanceUSD: (balance * 0.0234).toFixed(2)
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch SLERF balance" });
+    }
+  });
+
+  app.post("/api/slerf/stake", isAuthenticated, async (req, res) => {
+    try {
+      const { poolId, amount } = req.body;
+      const userId = (req as any).user?.id;
+      
+      if (!poolId || !amount || amount <= 0) {
+        return res.status(400).json({ message: "Invalid staking parameters" });
+      }
+      
+      // Simulate staking transaction
+      const transactionHash = `0x${Math.random().toString(16).substr(2, 64)}`;
+      const estimatedRewards = (amount * 0.35) / 365 * 30; // 35% APY for 30 days
+      
+      await storage.createActivity({
+        userId,
+        type: 'staking',
+        description: `Staked ${amount} SLERF in ${poolId}`,
+        points: Math.floor(amount * 0.1),
+        metadata: { poolId, amount, tokenSymbol: 'SLERF', transactionHash }
+      });
+      
+      res.json({ 
+        success: true, 
+        transactionHash,
+        estimatedRewards,
+        poolId,
+        amount
+      });
+    } catch (error) {
+      console.error('SLERF staking error:', error);
+      res.status(500).json({ message: "Failed to stake SLERF tokens" });
+    }
+  });
+
+  // Asset serving endpoint for logos
+  app.get("/api/assets/slerf-logo.png", (req, res) => {
+    // In production, serve the actual logo file
+    // For now, redirect to a placeholder
+    res.redirect('https://via.placeholder.com/40/8b5cf6/ffffff?text=SLERF');
+  });
+
+  // Enhanced Professional Trading API Endpoints
+  
+  // Real staking with DAO governance
   app.post("/api/staking/stake", isAuthenticated, async (req, res) => {
     try {
       const { userId, poolId, amount } = req.body;
