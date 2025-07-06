@@ -8,6 +8,15 @@ import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
 import { storage } from "./storage";
 
+// Extend session data type
+declare module 'express-session' {
+  interface SessionData {
+    userId?: string;
+    walletAddress?: string;
+    chainType?: string;
+  }
+}
+
 if (!process.env.REPLIT_DOMAINS) {
   throw new Error("Environment variable REPLIT_DOMAINS not provided");
 }
@@ -129,6 +138,20 @@ export async function setupAuth(app: Express) {
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
+  // Check for wallet-based session first
+  const sessionData = req.session as any;
+  if (sessionData && sessionData.userId && sessionData.walletAddress) {
+    // Wallet-based authentication
+    req.user = {
+      id: sessionData.userId,
+      walletAddress: sessionData.walletAddress,
+      chainType: sessionData.chainType,
+      claims: { sub: sessionData.userId }
+    };
+    return next();
+  }
+
+  // Fallback to Replit auth
   const user = req.user as any;
 
   if (!req.isAuthenticated() || !user.expires_at) {

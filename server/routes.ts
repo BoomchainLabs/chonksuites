@@ -10,11 +10,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
   await setupAuth(app);
 
-  // Auth routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+  // Auth routes - check wallet session or Replit auth
+  app.get('/api/auth/user', async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      let userId: string | null = null;
+
+      // Check for wallet-based session first
+      const sessionData = req.session as any;
+      if (sessionData && sessionData.userId && sessionData.walletAddress) {
+        userId = sessionData.userId;
+      }
+      // Fallback to Replit auth
+      else if (req.isAuthenticated() && req.user && req.user.claims) {
+        userId = req.user.claims.sub;
+      }
+
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
       const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
       res.json(user);
     } catch (error) {
       console.error("Error fetching user:", error);
@@ -359,24 +378,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Connect wallet (now updates existing authenticated user)
-  app.post("/api/connect-wallet", isAuthenticated, async (req: any, res) => {
+  // Connect wallet (creates or updates user)
+  app.post("/api/connect-wallet", async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
       const { walletAddress, chainType } = req.body;
       
-      // Update the authenticated user with wallet information
-      const user = await storage.updateUser(userId, {
-        walletAddress,
-        chainType,
-        lastLoginAt: new Date()
-      });
+      if (!walletAddress || !chainType) {
+        return res.status(400).json({ message: "Wallet address and chain type are required" });
+      }
 
-      // Initialize token balances if new wallet
-      const existingBalances = await storage.getUserTokenBalances(userId);
-      if (existingBalances.length === 0) {
-        await storage.updateTokenBalance(userId, "SLERF", 1247);
-        await storage.updateTokenBalance(userId, "CHONKPUMP", 892);
+      // Check if user already exists with this wallet
+      let user = await storage.getUserByWalletAddress(walletAddress);
+      
+      if (user) {
+        // Update existing user
+        user = await storage.updateUser(user.id, {
+          lastLoginAt: new Date(),
+          loginStreak: (user.loginStreak || 0) + 1
+        });
+      } else {
+        // Create new user with a simple numeric ID
+        const newUserId = Math.floor(Math.random() * 1000000).toString();
+        user = await storage.createUser({
+          id: newUserId,
+          walletAddress,
+          chainType,
+          lastLoginAt: new Date(),
+          pendingRewards: 0,
+          tasksCompleted: 0,
+          referralCount: 0
+        });
+
+        // Initialize token balances for new user
+        await storage.updateTokenBalance(user.id, "SLERF", 1247);
+        await storage.updateTokenBalance(user.id, "CHONKPUMP", 892);
+        
+        // Log new user activity
+        await storage.createActivity({
+          userId: user.id,
+          type: "wallet_connected",
+          description: `Connected ${chainType} wallet`,
+          reward: 0
+        });
+      }
+
+      // Create session for the user
+      if (req.session) {
+        const sessionData = req.session as any;
+        sessionData.userId = user.id;
+        sessionData.walletAddress = walletAddress;
+        sessionData.chainType = chainType;
       }
 
       res.json({ success: true, user });
