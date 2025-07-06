@@ -13,6 +13,7 @@ import TokenLogo from "@/components/token-logo";
 import Web3Status from "@/components/web3-status";
 import Chonk9kLogo from "@/components/chonk9k-logo";
 import AnimatedBackground from "@/components/animated-background";
+import TradingDashboard from "@/pages/trading-dashboard";
 import { apiRequest } from "@/lib/queryClient";
 import { formatTime } from "@/lib/wallet-utils";
 import { useToast } from "@/hooks/use-toast";

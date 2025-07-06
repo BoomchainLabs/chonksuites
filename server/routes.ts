@@ -4,6 +4,12 @@ import { storage } from "./storage";
 import { insertUserSchema, insertUserTaskSchema, insertReferralSchema } from "@shared/schema";
 import { z } from "zod";
 import { web3Service } from "./web3-service";
+import { 
+  getDailyTriviaQuestion, 
+  checkTriviaCompletedToday, 
+  miningGame, 
+  predictionGame 
+} from "./slerf-games";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
