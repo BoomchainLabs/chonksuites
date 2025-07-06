@@ -21,10 +21,11 @@ export async function initSPLTokenCompatibility() {
     // Try to import the new API first (v0.4.x)
     const newAPI = await import('@solana/spl-token');
     
-    getAssociatedTokenAddress = newAPI.getAssociatedTokenAddress;
-    getAccount = newAPI.getAccount;
+    // Use type-safe property access
+    getAssociatedTokenAddress = (newAPI as any).getAssociatedTokenAddress;
+    getAccount = (newAPI as any).getAccount;
     TOKEN_PROGRAM_ID = newAPI.TOKEN_PROGRAM_ID;
-    ASSOCIATED_TOKEN_PROGRAM_ID = newAPI.ASSOCIATED_TOKEN_PROGRAM_ID;
+    ASSOCIATED_TOKEN_PROGRAM_ID = (newAPI as any).ASSOCIATED_TOKEN_PROGRAM_ID;
     
     // Test if the new API functions exist
     if (getAssociatedTokenAddress && getAccount) {
