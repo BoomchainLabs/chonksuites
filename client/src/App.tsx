@@ -9,11 +9,13 @@ import { useAuth } from "@/hooks/useAuth";
 import StableDashboard from "@/components/stable-dashboard";
 import ProductionTradingDashboard from "@/components/production-trading-dashboard";
 import DAOGovernance from "@/components/dao-governance";
-import SimplePlayground from "@/components/simple-playground";
-import HackerTerminal from "@/components/hacker-terminal";
-import AchievementsSimple from "@/components/achievements-simple";
+import { 
+  ProductionChallenges, 
+  ProductionPlayground, 
+  ProductionAchievements, 
+  ProductionTerminal 
+} from "@/components/production-ready-components";
 import RealStakingPlatform from "@/components/real-staking-platform";
-import SimpleChallenges from "@/components/simple-challenges";
 import ProfessionalLanding from "@/components/professional-landing";
 import MonetizationDashboard from "@/components/monetization-dashboard";
 import NotFound from "@/pages/not-found";
@@ -33,10 +35,10 @@ function Router() {
           <Route path="/slerf" component={ProductionTradingDashboard} />
           <Route path="/revenue" component={MonetizationDashboard} />
           <Route path="/dao" component={DAOGovernance} />
-          <Route path="/achievements" component={AchievementsSimple} />
-          <Route path="/challenges" component={SimpleChallenges} />
-          <Route path="/playground" component={SimplePlayground} />
-          <Route path="/terminal" component={HackerTerminal} />
+          <Route path="/achievements" component={ProductionAchievements} />
+          <Route path="/challenges" component={ProductionChallenges} />
+          <Route path="/playground" component={ProductionPlayground} />
+          <Route path="/terminal" component={ProductionTerminal} />
         </>
       )}
       <Route component={NotFound} />
