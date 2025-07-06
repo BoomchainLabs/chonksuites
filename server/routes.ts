@@ -463,7 +463,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/tokens/create", isAuthenticated, async (req, res) => {
     try {
       const tokenData = req.body;
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
       
       const token = {
         id: `token_${Date.now()}`,

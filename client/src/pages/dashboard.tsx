@@ -113,12 +113,12 @@ export default function Dashboard() {
   }
 
   // Type-safe access to dashboard data
-  const user = dashboardData?.user;
-  const tokenBalances = dashboardData?.tokenBalances || [];
-  const stats = dashboardData?.stats || {};
-  const tasks = dashboardData?.tasks || [];
-  const completedTaskIds = dashboardData?.completedTaskIds || [];
-  const activities = dashboardData?.activities || [];
+  const user = dashboardData && typeof dashboardData === 'object' ? dashboardData.user : null;
+  const tokenBalances = dashboardData && typeof dashboardData === 'object' ? dashboardData.tokenBalances || [] : [];
+  const stats = dashboardData && typeof dashboardData === 'object' ? dashboardData.stats || {} : {};
+  const tasks = dashboardData && typeof dashboardData === 'object' ? dashboardData.tasks || [] : [];
+  const completedTaskIds = dashboardData && typeof dashboardData === 'object' ? dashboardData.completedTaskIds || [] : [];
+  const activities = dashboardData && typeof dashboardData === 'object' ? dashboardData.activities || [] : [];
 
   const displayName = user?.firstName && user?.lastName 
     ? `${user.firstName} ${user.lastName}` 

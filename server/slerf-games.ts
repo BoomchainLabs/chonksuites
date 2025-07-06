@@ -106,10 +106,10 @@ export function getDailyTriviaQuestion(userId: number): typeof slerfTriviaQuesti
 // Check if user completed trivia today
 export async function checkTriviaCompletedToday(userId: number): Promise<boolean> {
   const today = new Date().toDateString();
-  const activities = await storage.getUserActivities(userId, 50);
+  const activities = await storage.getUserActivities(userId.toString(), 50);
   return activities.some(activity => 
     activity.type === 'trivia_completed' && 
-    new Date(activity.createdAt).toDateString() === today
+    activity.createdAt && new Date(activity.createdAt).toDateString() === today
   );
 }
 

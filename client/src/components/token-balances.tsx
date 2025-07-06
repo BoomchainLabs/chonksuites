@@ -3,13 +3,16 @@ import { motion } from "framer-motion";
 
 interface TokenBalancesProps {
   userId?: string;
+  balances?: any[];
 }
 
-export default function TokenBalances({ userId }: TokenBalancesProps) {
-  const { data: balances, isLoading } = useQuery({
+export default function TokenBalances({ userId, balances: propBalances }: TokenBalancesProps) {
+  const { data: queryBalances, isLoading } = useQuery({
     queryKey: ['/api/token-balances', userId],
-    enabled: !!userId,
+    enabled: !!userId && !propBalances,
   });
+
+  const balances = propBalances || queryBalances;
 
   if (isLoading) {
     return (
@@ -26,8 +29,8 @@ export default function TokenBalances({ userId }: TokenBalancesProps) {
     );
   }
 
-  const slerfBalance = balances?.find((b: any) => b.tokenSymbol === 'SLERF')?.balance || 0;
-  const chonkBalance = balances?.find((b: any) => b.tokenSymbol === 'CHONK9K')?.balance || 0;
+  const slerfBalance = Array.isArray(balances) ? balances.find((b: any) => b.tokenSymbol === 'SLERF')?.balance || 0 : 0;
+  const chonkBalance = Array.isArray(balances) ? balances.find((b: any) => b.tokenSymbol === 'CHONK9K')?.balance || 0 : 0;
 
   return (
     <div className="grid grid-cols-2 gap-4">
