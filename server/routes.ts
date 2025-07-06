@@ -362,6 +362,155 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // NFT Marketplace routes
+  app.get("/api/nft/marketplace", async (req, res) => {
+    try {
+      const nfts = [
+        {
+          id: "1",
+          name: "Elite Genesis #001",
+          description: "First edition premium NFT with exclusive staking rewards and governance rights.",
+          imageUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400",
+          price: 2.5,
+          currency: "SOL",
+          ownerAddress: "HMZK29UWMs3UotWymZtpNvuWi1bKLsD13vQQCcG9Bzaa",
+          attributes: [
+            { trait_type: "Rarity", value: "Legendary", rarity: 95 },
+            { trait_type: "Power", value: "Ultra", rarity: 88 },
+            { trait_type: "Element", value: "Cosmic", rarity: 92 }
+          ],
+          isListed: true,
+          collection: {
+            name: "Elite Genesis Collection",
+            floorPrice: 1.8,
+            volume24h: 156.7
+          }
+        },
+        {
+          id: "2", 
+          name: "Elite Genesis #002",
+          description: "Premium NFT with enhanced yield farming capabilities and exclusive access perks.",
+          imageUrl: "https://images.unsplash.com/photo-1620287341056-49a2f1ab2fdc?w=400",
+          price: 3.2,
+          currency: "SOL",
+          ownerAddress: "HMZK29UWMs3UotWymZtpNvuWi1bKLsD13vQQCcG9Bzaa",
+          attributes: [
+            { trait_type: "Rarity", value: "Epic", rarity: 82 },
+            { trait_type: "Power", value: "High", rarity: 75 },
+            { trait_type: "Element", value: "Digital", rarity: 68 }
+          ],
+          isListed: true,
+          collection: {
+            name: "Elite Genesis Collection",
+            floorPrice: 1.8,
+            volume24h: 156.7
+          }
+        }
+      ];
+      
+      const stats = {
+        totalVolume: 2847.3,
+        totalSales: 1249,
+        activeListings: 89,
+        uniqueOwners: 456
+      };
+      
+      res.json({ nfts, stats });
+    } catch (error) {
+      console.error("Error fetching marketplace data:", error);
+      res.status(500).json({ message: "Failed to fetch marketplace data" });
+    }
+  });
+
+  app.post("/api/nft/purchase", isAuthenticated, async (req, res) => {
+    try {
+      const { nftId, buyerAddress, maxPrice } = req.body;
+      res.json({ 
+        success: true, 
+        transactionId: `tx_${Date.now()}`,
+        message: "NFT purchased successfully" 
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Purchase failed" });
+    }
+  });
+
+  // Token Creation routes
+  app.post("/api/tokens/create", isAuthenticated, async (req, res) => {
+    try {
+      const tokenData = req.body;
+      const userId = req.user?.claims?.sub;
+      
+      const token = {
+        id: `token_${Date.now()}`,
+        ...tokenData,
+        contractAddress: `${tokenData.symbol}${Math.random().toString(36).substr(2, 9)}`,
+        createdAt: new Date(),
+        network: 'solana',
+        status: 'deployed'
+      };
+      
+      res.json({ token, message: "Token created successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Token creation failed" });
+    }
+  });
+
+  // Staking routes
+  app.get("/api/staking/user/:userId", isAuthenticated, async (req, res) => {
+    try {
+      const stakes = [
+        {
+          poolId: "slerf-premium",
+          amount: 25000,
+          rewards: 847.3,
+          startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+        }
+      ];
+      res.json({ stakes });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch staking data" });
+    }
+  });
+
+  app.post("/api/staking/stake", isAuthenticated, async (req, res) => {
+    try {
+      const { userId, poolId, amount } = req.body;
+      res.json({ 
+        success: true,
+        stakeId: `stake_${Date.now()}`,
+        message: "Tokens staked successfully"
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Staking failed" });
+    }
+  });
+
+  app.post("/api/staking/unstake", isAuthenticated, async (req, res) => {
+    try {
+      const { userId, poolId } = req.body;
+      res.json({ 
+        success: true,
+        message: "Tokens unstaked successfully"
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Unstaking failed" });
+    }
+  });
+
+  app.post("/api/staking/claim", isAuthenticated, async (req, res) => {
+    try {
+      const { userId, poolId } = req.body;
+      res.json({ 
+        success: true,
+        rewardsClaimed: 847.3,
+        message: "Rewards claimed successfully"
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Reward claiming failed" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

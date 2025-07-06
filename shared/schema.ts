@@ -1,6 +1,7 @@
-import { pgTable, text, serial, integer, boolean, timestamp, jsonb, varchar, index } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, jsonb, varchar, index, bigint } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { nanoid } from "nanoid";
 
 // Session storage table.
 // (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
@@ -82,6 +83,86 @@ export const activities = pgTable("activities", {
   description: text("description").notNull(),
   reward: integer("reward").default(0),
   createdAt: timestamp("created_at").defaultNow(),
+});
+
+// NFT Collection and Marketplace tables
+export const nftCollections = pgTable("nft_collections", {
+  id: varchar("id").primaryKey().notNull().default(nanoid()),
+  contractAddress: varchar("contract_address").notNull().unique(),
+  name: varchar("name").notNull(),
+  symbol: varchar("symbol").notNull(),
+  description: text("description"),
+  imageUrl: varchar("image_url"),
+  totalSupply: integer("total_supply").default(0),
+  floorPrice: integer("floor_price").default(0), // in lamports
+  volume24h: integer("volume_24h").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const nftTokens = pgTable("nft_tokens", {
+  id: varchar("id").primaryKey().notNull().default(nanoid()),
+  collectionId: varchar("collection_id").notNull().references(() => nftCollections.id),
+  tokenId: varchar("token_id").notNull(),
+  name: varchar("name").notNull(),
+  description: text("description"),
+  imageUrl: varchar("image_url"),
+  attributes: jsonb("attributes"), // JSON array of traits
+  ownerAddress: varchar("owner_address"),
+  mintAddress: varchar("mint_address").unique(),
+  isListed: boolean("is_listed").default(false),
+  price: integer("price"), // in lamports
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const marketplaceListings = pgTable("marketplace_listings", {
+  id: varchar("id").primaryKey().notNull().default(nanoid()),
+  nftTokenId: varchar("nft_token_id").notNull().references(() => nftTokens.id),
+  sellerAddress: varchar("seller_address").notNull(),
+  price: integer("price").notNull(), // in lamports
+  currency: varchar("currency").notNull().default("SOL"), // SOL, SLERF, CHONK9K
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// User-created tokens
+export const userTokens = pgTable("user_tokens", {
+  id: varchar("id").primaryKey().notNull().default(nanoid()),
+  creatorId: varchar("creator_id").notNull().references(() => users.id),
+  name: varchar("name").notNull(),
+  symbol: varchar("symbol").notNull(),
+  description: text("description"),
+  imageUrl: varchar("image_url"),
+  totalSupply: bigint("total_supply", { mode: "number" }).notNull(),
+  mintAddress: varchar("mint_address").unique(),
+  decimals: integer("decimals").default(9),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Staking pools for SLERF and CHONK9K
+export const stakingPools = pgTable("staking_pools", {
+  id: varchar("id").primaryKey().notNull().default(nanoid()),
+  tokenSymbol: varchar("token_symbol").notNull(), // "SLERF" or "CHONK9K"
+  name: varchar("name").notNull(),
+  apy: integer("apy").notNull(), // percentage * 100 (e.g., 1500 = 15%)
+  minStakeAmount: bigint("min_stake_amount", { mode: "number" }).notNull(),
+  maxStakeAmount: bigint("max_stake_amount", { mode: "number" }),
+  lockPeriodDays: integer("lock_period_days").notNull(),
+  totalStaked: bigint("total_staked", { mode: "number" }).default(0),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const userStakes = pgTable("user_stakes", {
+  id: varchar("id").primaryKey().notNull().default(nanoid()),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  poolId: varchar("pool_id").notNull().references(() => stakingPools.id),
+  amount: bigint("amount", { mode: "number" }).notNull(),
+  rewardsEarned: bigint("rewards_earned", { mode: "number" }).default(0),
+  stakedAt: timestamp("staked_at").defaultNow(),
+  unlocksAt: timestamp("unlocks_at").notNull(),
+  isActive: boolean("is_active").default(true),
 });
 
 // Insert schemas
