@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import MobileNavigation from '@/components/mobile-navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
+import ProfessionalTokenLogo from '@/components/professional-token-logo';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -61,9 +62,11 @@ const CleanTradingDashboard: React.FC = () => {
       change24h: slerfData?.change24h || 15.67,
       volume: slerfData?.volume24h || 2340000,
       marketCap: slerfData?.marketCap || 45600000,
-      logo: '🏄',
+      logo: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/base/assets/0x233df63325933fa3f2dac8e695cd84bb2f91ab07/logo.png',
+      fallbackLogo: '🌊',
       address: '0x233df63325933fa3f2dac8e695cd84bb2f91ab07',
-      network: 'Base'
+      network: 'Base',
+      networkLogo: 'https://cryptologos.cc/logos/base-base-logo.png'
     },
     {
       symbol: 'CHONK9K',
@@ -72,9 +75,11 @@ const CleanTradingDashboard: React.FC = () => {
       change24h: -3.45,
       volume: 890000,
       marketCap: 12300000,
-      logo: '🐱',
+      logo: 'https://arweave.net/YrKeC_8puZ8V7dOCQEt0rG6QcEgFQ5nXrr8F0kWWzAY',
+      fallbackLogo: '🚀',
       address: 'DnUsQnwNot38V9JbisNC18VHZkae1eKK5N2Dgy55pump',
-      network: 'Solana'
+      network: 'Solana',
+      networkLogo: 'https://cryptologos.cc/logos/solana-sol-logo.png'
     }
   ];
 

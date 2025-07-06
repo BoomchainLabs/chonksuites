@@ -14,7 +14,8 @@ import {
   Zap,
   ArrowUpDown,
   Users,
-  Lock
+  Lock,
+  DollarSign
 } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import Chonk9kLogo from "@/components/chonk9k-logo";
@@ -26,6 +27,7 @@ const navigationItems = [
   { path: '/swap', label: 'Swap', icon: ArrowUpDown, description: 'Token swapping interface' },
   { path: '/community', label: 'Community', icon: Users, description: 'Trivia, achievements & leaderboard' },
   { path: '/slerf', label: '$SLERF Hub', icon: Zap, description: 'SLERF token trading hub' },
+  { path: '/revenue', label: 'Revenue', icon: DollarSign, description: 'Business monetization dashboard' },
   { path: '/dao', label: 'DAO', icon: Vote, description: 'Governance and voting' },
   { path: '/playground', label: 'Playground', icon: Gamepad2, description: 'Token mascot interactions' },
   { path: '/terminal', label: 'Terminal', icon: Terminal, description: 'Hacker terminal interface' }
@@ -70,18 +72,22 @@ export default function MobileNavigation() {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => setIsOpen(false)}
-                      className={`flex items-center space-x-3 p-3 rounded-lg cursor-pointer transition-all duration-200 ${
+                      className={`flex items-center space-x-5 p-5 rounded-xl cursor-pointer transition-all duration-200 ${
                         isActive 
-                          ? 'bg-gradient-to-r from-purple-500/20 to-cyan-500/20 border border-purple-500/30' 
-                          : 'hover:bg-slate-800/50 border border-transparent'
+                          ? 'bg-gradient-to-r from-purple-500/20 to-cyan-500/20 border border-purple-500/30 shadow-lg' 
+                          : 'hover:bg-slate-800/50 border border-transparent hover:border-slate-700'
                       }`}
                     >
-                      <Icon className={`w-5 h-5 ${isActive ? 'text-purple-400' : 'text-gray-400'}`} />
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                        isActive ? 'bg-gradient-to-r from-purple-600 to-cyan-600' : 'bg-slate-700/50'
+                      }`}>
+                        <Icon className={`w-6 h-6 ${isActive ? 'text-white' : 'text-gray-400'}`} />
+                      </div>
                       <div className="flex-1">
-                        <div className={`font-medium ${isActive ? 'text-white' : 'text-gray-300'}`}>
+                        <div className={`font-semibold text-lg ${isActive ? 'text-white' : 'text-gray-300'}`}>
                           {item.label}
                         </div>
-                        <div className="text-xs text-gray-500">
+                        <div className="text-sm text-gray-500 leading-relaxed">
                           {item.description}
                         </div>
                       </div>
@@ -89,7 +95,7 @@ export default function MobileNavigation() {
                         <motion.div
                           initial={{ scale: 0 }}
                           animate={{ scale: 1 }}
-                          className="w-2 h-2 bg-purple-400 rounded-full"
+                          className="w-3 h-3 bg-purple-400 rounded-full shadow-lg"
                         />
                       )}
                     </motion.div>

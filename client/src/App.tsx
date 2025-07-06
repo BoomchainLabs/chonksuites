@@ -16,6 +16,9 @@ import StakingPlatform from "@/components/staking-platform";
 import GamifiedCommunity from "@/components/gamified-community";
 import TokenSwapDApp from "@/components/token-swap-dapp";
 import WorkingLanding from "@/pages/working-landing";
+import ProfessionalLanding from "@/components/professional-landing";
+import MonetizationDashboard from "@/components/monetization-dashboard";
+import RealStakingPlatform from "@/components/real-staking-platform";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -41,16 +44,17 @@ function Router() {
         </div>
       )} />
       {isLoading || !isAuthenticated ? (
-        <Route path="/" component={WorkingLanding} />
+        <Route path="/" component={ProfessionalLanding} />
       ) : (
         <>
           <Route path="/" component={SimpleDashboard} />
           <Route path="/home" component={SimpleDashboard} />
           <Route path="/trading" component={CleanTradingDashboard} />
-          <Route path="/staking" component={StakingPlatform} />
+          <Route path="/staking" component={RealStakingPlatform} />
           <Route path="/swap" component={TokenSwapDApp} />
           <Route path="/community" component={GamifiedCommunity} />
           <Route path="/slerf" component={SlerfTradingHub} />
+          <Route path="/revenue" component={MonetizationDashboard} />
           <Route path="/dao" component={DAOGovernance} />
           <Route path="/achievements" component={AchievementsSimple} />
           <Route path="/playground" component={SimplePlayground} />
