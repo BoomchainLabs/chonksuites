@@ -6,7 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 
 // Production-ready components
-import ProductionReadyDashboard from "@/components/production-ready-dashboard";
+import StableDashboard from "@/components/stable-dashboard";
 import SlerfTradingHub from "@/components/slerf-trading-hub";
 import DAOGovernance from "@/components/dao-governance";
 import SimplePlayground from "@/components/simple-playground";
@@ -27,7 +27,7 @@ function Router() {
         <Route path="/" component={ProfessionalLanding} />
       ) : (
         <>
-          <Route path="/" component={ProductionReadyDashboard} />
+          <Route path="/" component={StableDashboard} />
           <Route path="/trading" component={SlerfTradingHub} />
           <Route path="/staking" component={RealStakingPlatform} />
           <Route path="/slerf" component={SlerfTradingHub} />
