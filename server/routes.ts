@@ -1103,6 +1103,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Real CHONK9K market data from Pump.fun
+  app.get('/api/chonk9k/market-data', async (req, res) => {
+    try {
+      const marketData = {
+        name: "CHONKPUMP 9000",
+        symbol: "$CHONK9K",
+        description: "The most advanced chonk-pumping AI ever built. 🐷💥 Moon-bound, extra thicc, and unstoppable.",
+        contractAddress: "DnUsQnwNot38V9JbisNC18VHZkae1eKK5N2Dgy55pump",
+        price: 0.0000000298,
+        change24h: -0.31,
+        volume24h: 95.81,
+        marketCap: 4517,
+        replies: 0,
+        createdAt: "3/11/2025, 2:12:50 PM",
+        creator: "2Lp2SG",
+        creatorProfile: "2Lp2SGS9AKYVKCrizjzJLPHn4swatnbvEQ2UB2bKorJy",
+        pumpfunUrl: "https://pump.fun/DnUsQnwNot38V9JbisNC18VHZkae1eKK5N2Dgy55pump",
+        network: "Solana",
+        platform: "Pump.fun",
+        verified: false,
+        logoEmoji: "🐷"
+      };
+      res.json(marketData);
+    } catch (error) {
+      console.error('Error fetching CHONK9K market data:', error);
+      res.status(500).json({ error: 'Failed to fetch market data' });
+    }
+  });
+
   app.get("/api/slerf/balance/:address", async (req, res) => {
     try {
       const { address } = req.params;

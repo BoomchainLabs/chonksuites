@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import RealSlerfIntegration from './real-slerf-integration';
+import RealChonk9kIntegration from './real-chonk9k-integration';
 
 interface TokenData {
   symbol: string;
@@ -131,8 +132,33 @@ export default function LiveTradingDashboard() {
           </div>
         </div>
 
-        {/* Real SLERF Integration */}
-        <RealSlerfIntegration />
+        {/* Real Token Integrations */}
+        <Tabs defaultValue="slerf" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 bg-slate-700/50 mb-6">
+            <TabsTrigger value="slerf" className="text-white">
+              <img 
+                src="https://assets.geckoterminal.com/etpssj9w2yaa64do4daq7eev22ya" 
+                alt="SLERF" 
+                className="w-5 h-5 mr-2 rounded-full"
+                onError={(e) => {
+                  e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='40' fill='%236366f1'/%3E%3Ctext x='50' y='58' font-family='Arial' font-size='24' fill='white' text-anchor='middle'%3E$L%3C/text%3E%3C/svg%3E";
+                }}
+              />
+              SLERF (Base)
+            </TabsTrigger>
+            <TabsTrigger value="chonk9k" className="text-white">
+              🐷 CHONK9K (Solana)
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="slerf">
+            <RealSlerfIntegration />
+          </TabsContent>
+          
+          <TabsContent value="chonk9k">
+            <RealChonk9kIntegration />
+          </TabsContent>
+        </Tabs>
 
         {/* Trading Interface */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
