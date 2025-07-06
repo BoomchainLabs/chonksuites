@@ -4,6 +4,8 @@ import {
   type UserTask, type InsertUserTask, type TokenBalance, type InsertTokenBalance,
   type Referral, type InsertReferral, type Activity, type InsertActivity
 } from "@shared/schema";
+import { db } from "./db";
+import { eq, and, gte } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -398,4 +400,334 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export class DatabaseStorage implements IStorage {
+  constructor() {
+    // Initialize default tasks
+    this.initializeTasks();
+  }
+
+  private async initializeTasks() {
+    const defaultTasks = [
+      {
+        name: "Daily Login",
+        description: "Sign in to your account",
+        reward: 10,
+        taskType: "daily",
+        isActive: true,
+        icon: "fas fa-check",
+        buttonText: "Complete"
+      },
+      {
+        name: "Complete Quiz",
+        description: "Answer Web3 knowledge questions",
+        reward: 25,
+        taskType: "daily",
+        isActive: true,
+        icon: "fas fa-question",
+        buttonText: "Start Quiz"
+      },
+      {
+        name: "Share on Twitter",
+        description: "Tweet with #Chonk9k hashtag",
+        reward: 20,
+        taskType: "daily",
+        isActive: true,
+        icon: "fab fa-twitter",
+        buttonText: "Tweet"
+      },
+      {
+        name: "Invite Friends",
+        description: "Refer new users to the platform",
+        reward: 30,
+        taskType: "daily",
+        isActive: true,
+        icon: "fas fa-users",
+        buttonText: "Invite"
+      }
+    ];
+
+    // Check if tasks already exist
+    const existingTasks = await this.getAllTasks();
+    if (existingTasks.length === 0) {
+      for (const task of defaultTasks) {
+        await this.createTask(task);
+      }
+    }
+  }
+
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+
+  async getUserByWalletAddress(walletAddress: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.walletAddress, walletAddress));
+    return user || undefined;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values({
+        walletAddress: insertUser.walletAddress,
+        chainType: insertUser.chainType,
+        username: insertUser.username,
+        lastLoginAt: insertUser.lastLoginAt,
+        referredBy: insertUser.referredBy
+      })
+      .returning();
+    
+    // Initialize token balances
+    await this.updateTokenBalance(user.id, "SLERF", 1247);
+    await this.updateTokenBalance(user.id, "CHONKPUMP", 892);
+    
+    return user;
+  }
+
+  async updateUser(id: number, updates: Partial<User>): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set(updates)
+      .where(eq(users.id, id))
+      .returning();
+    
+    if (!user) {
+      throw new Error("User not found");
+    }
+    
+    return user;
+  }
+
+  async getUserStats(userId: number): Promise<{
+    totalRewards: number;
+    tasksCompleted: number;
+    referralCount: number;
+    loyaltyScore: number;
+    pendingRewards: number;
+    referralEarnings: number;
+    loginStreak: number;
+  }> {
+    const user = await this.getUser(userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    return {
+      totalRewards: user.totalRewards || 0,
+      tasksCompleted: user.tasksCompleted || 0,
+      referralCount: user.referralCount || 0,
+      loyaltyScore: user.loyaltyScore || 0,
+      pendingRewards: user.pendingRewards || 0,
+      referralEarnings: user.referralEarnings || 0,
+      loginStreak: user.loginStreak || 0,
+    };
+  }
+
+  async getAllTasks(): Promise<Task[]> {
+    return await db.select().from(tasks).where(eq(tasks.isActive, true));
+  }
+
+  async getTask(id: number): Promise<Task | undefined> {
+    const [task] = await db.select().from(tasks).where(eq(tasks.id, id));
+    return task || undefined;
+  }
+
+  async createTask(insertTask: InsertTask): Promise<Task> {
+    const [task] = await db
+      .insert(tasks)
+      .values(insertTask)
+      .returning();
+    return task;
+  }
+
+  async getUserTasks(userId: number): Promise<UserTask[]> {
+    return await db.select().from(userTasks).where(eq(userTasks.userId, userId));
+  }
+
+  async completeUserTask(insertUserTask: InsertUserTask): Promise<UserTask> {
+    const [userTask] = await db
+      .insert(userTasks)
+      .values({
+        userId: insertUserTask.userId,
+        taskId: insertUserTask.taskId,
+        completedAt: new Date(),
+        canReset: insertUserTask.canReset ?? true,
+        lastResetAt: new Date()
+      })
+      .returning();
+    
+    // Update user stats
+    if (userTask.userId && userTask.taskId) {
+      const user = await this.getUser(userTask.userId);
+      const task = await this.getTask(userTask.taskId);
+      
+      if (user && task) {
+        await this.updateUser(user.id, {
+          tasksCompleted: (user.tasksCompleted || 0) + 1,
+          pendingRewards: (user.pendingRewards || 0) + task.reward,
+          totalRewards: (user.totalRewards || 0) + task.reward
+        });
+        
+        // Create activity
+        await this.createActivity({
+          userId: user.id,
+          type: "task_completed",
+          description: `Completed ${task.name}`,
+          reward: task.reward
+        });
+      }
+    }
+    
+    return userTask;
+  }
+
+  async getCompletedTasksToday(userId: number): Promise<UserTask[]> {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    return await db
+      .select()
+      .from(userTasks)
+      .where(
+        and(
+          eq(userTasks.userId, userId),
+          gte(userTasks.completedAt, today)
+        )
+      );
+  }
+
+  async resetDailyTasks(userId: number): Promise<void> {
+    await db
+      .delete(userTasks)
+      .where(
+        and(
+          eq(userTasks.userId, userId),
+          eq(userTasks.canReset, true)
+        )
+      );
+  }
+
+  async getUserTokenBalances(userId: number): Promise<TokenBalance[]> {
+    return await db.select().from(tokenBalances).where(eq(tokenBalances.userId, userId));
+  }
+
+  async updateTokenBalance(userId: number, tokenSymbol: string, balance: number): Promise<TokenBalance> {
+    // Check if balance already exists
+    const [existing] = await db
+      .select()
+      .from(tokenBalances)
+      .where(
+        and(
+          eq(tokenBalances.userId, userId),
+          eq(tokenBalances.tokenSymbol, tokenSymbol)
+        )
+      );
+
+    if (existing) {
+      const [updated] = await db
+        .update(tokenBalances)
+        .set({ balance })
+        .where(eq(tokenBalances.id, existing.id))
+        .returning();
+      return updated;
+    }
+
+    const [newBalance] = await db
+      .insert(tokenBalances)
+      .values({
+        userId,
+        tokenSymbol,
+        balance,
+        chainType: tokenSymbol === "SLERF" ? "base" : "solana"
+      })
+      .returning();
+    
+    return newBalance;
+  }
+
+  async createReferral(insertReferral: InsertReferral): Promise<Referral> {
+    const [referral] = await db
+      .insert(referrals)
+      .values({
+        referrerId: insertReferral.referrerId,
+        referredUserId: insertReferral.referredUserId,
+        rewardEarned: insertReferral.rewardEarned || 30
+      })
+      .returning();
+    
+    // Update referrer stats
+    if (referral.referrerId) {
+      const referrer = await this.getUser(referral.referrerId);
+      if (referrer) {
+        await this.updateUser(referrer.id, {
+          referralCount: (referrer.referralCount || 0) + 1,
+          referralEarnings: (referrer.referralEarnings || 0) + (referral.rewardEarned || 30),
+          pendingRewards: (referrer.pendingRewards || 0) + (referral.rewardEarned || 30)
+        });
+        
+        // Create activity
+        await this.createActivity({
+          userId: referrer.id,
+          type: "referral_earned",
+          description: "Earned referral bonus",
+          reward: referral.rewardEarned || 30
+        });
+      }
+    }
+    
+    return referral;
+  }
+
+  async getUserReferrals(userId: number): Promise<Referral[]> {
+    return await db.select().from(referrals).where(eq(referrals.referrerId, userId));
+  }
+
+  async createActivity(insertActivity: InsertActivity): Promise<Activity> {
+    const [activity] = await db
+      .insert(activities)
+      .values({
+        userId: insertActivity.userId,
+        type: insertActivity.type,
+        description: insertActivity.description,
+        reward: insertActivity.reward
+      })
+      .returning();
+    return activity;
+  }
+
+  async getUserActivities(userId: number, limit = 10): Promise<Activity[]> {
+    return await db
+      .select()
+      .from(activities)
+      .where(eq(activities.userId, userId))
+      .orderBy(activities.createdAt)
+      .limit(limit);
+  }
+
+  async claimRewards(userId: number): Promise<{ claimed: number }> {
+    const user = await this.getUser(userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const claimed = user.pendingRewards || 0;
+    await this.updateUser(userId, { pendingRewards: 0 });
+    
+    // Update token balance
+    const balances = await this.getUserTokenBalances(userId);
+    const slerfBalance = balances.find(b => b.tokenSymbol === "SLERF");
+    await this.updateTokenBalance(userId, "SLERF", (slerfBalance?.balance || 0) + claimed);
+    
+    // Create activity
+    await this.createActivity({
+      userId,
+      type: "tokens_claimed",
+      description: `Claimed ${claimed} $SLERF tokens`,
+      reward: claimed
+    });
+
+    return { claimed };
+  }
+}
+
+export const storage = new DatabaseStorage();

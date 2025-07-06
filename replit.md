@@ -110,6 +110,7 @@ This is a full-stack web application built with React, TypeScript, and Express.j
 
 Changelog:
 - July 06, 2025. Initial setup
+- July 06, 2025. Added PostgreSQL database with Drizzle ORM, migrated from in-memory storage to persistent database storage
 
 ## User Preferences
 
