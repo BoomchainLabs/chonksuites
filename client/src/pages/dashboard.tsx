@@ -11,6 +11,8 @@ import ReferralSystem from "@/components/referral-system";
 import ClaimRewards from "@/components/claim-rewards";
 import TokenLogo from "@/components/token-logo";
 import Web3Status from "@/components/web3-status";
+import Chonk9kLogo from "@/components/chonk9k-logo";
+import AnimatedBackground from "@/components/animated-background";
 import { apiRequest } from "@/lib/queryClient";
 import { formatTime } from "@/lib/wallet-utils";
 import { useToast } from "@/hooks/use-toast";
@@ -90,30 +92,46 @@ export default function Dashboard() {
 
   if (!isConnected) {
     return (
-      <div className="min-h-screen bg-gray-900">
-        {/* Header */}
-        <header className="bg-gradient-to-r from-purple-900 via-gray-800 to-blue-900 border-b border-purple-500/30 sticky top-0 z-50 backdrop-blur-sm">
-          <div className="container mx-auto px-4 py-4">
+      <div className="min-h-screen bg-background relative">
+        <AnimatedBackground />
+        
+        {/* Professional Boomchainlab Header */}
+        <header className="glass-card border-b border-white/10 sticky top-0 z-50 backdrop-blur-lg">
+          <div className="container-padding py-6">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center animate-float">
-                  <Rocket className="text-white text-xl" />
+              <div className="flex items-center space-x-6">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-blue-500 flex items-center justify-center glow-primary">
+                    <span className="text-white font-bold text-xl">B</span>
+                  </div>
+                  <div>
+                    <h1 className="text-3xl font-display font-bold gradient-text">
+                      Boomchainlab
+                    </h1>
+                    <p className="text-sm text-muted-foreground">
+                      Enterprise Web3 Platform
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h1 className="text-2xl font-orbitron font-bold gradient-text">
-                    CHONK9K SUITE
-                  </h1>
-                  <p className="text-sm text-gray-400">Web3 Loyalty & Rewards</p>
-                </div>
-                <div className="hidden lg:flex items-center space-x-2 ml-6">
-                  <TokenLogo tokenSymbol="SLERF" size="sm" />
-                  <TokenLogo tokenSymbol="CHONKPUMP" size="sm" />
+                
+                <div className="hidden lg:flex items-center space-x-4">
+                  <Chonk9kLogo size="md" animated={true} />
+                  <div className="flex items-center space-x-2">
+                    <TokenLogo tokenSymbol="LERF" size="sm" />
+                    <TokenLogo tokenSymbol="CHONK9K" size="sm" />
+                  </div>
                 </div>
               </div>
-              <WalletConnect
-                onConnect={handleWalletConnect}
-                isConnected={isConnected}
-              />
+              
+              <div className="flex items-center space-x-4">
+                <Badge className="bg-green-500/10 text-green-400 border-green-500/20 font-mono">
+                  v3.0 Enterprise
+                </Badge>
+                <WalletConnect
+                  onConnect={handleWalletConnect}
+                  isConnected={isConnected}
+                />
+              </div>
             </div>
           </div>
         </header>
