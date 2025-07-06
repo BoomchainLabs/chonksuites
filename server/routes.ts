@@ -1,5 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import express from "express";
+import path from "path";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { getDailyTriviaQuestion, checkTriviaCompletedToday, miningGame, predictionGame } from "./slerf-games";
@@ -8,6 +10,21 @@ import { authenticTokenService } from "./authentic-token-service";
 import { insertUserTaskSchema, insertActivitySchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Static file serving for attached assets (images)
+  app.use('/attached_assets', express.static(path.join(process.cwd(), 'attached_assets'), {
+    setHeaders: (res, filePath) => {
+      if (filePath.endsWith('.jpeg') || filePath.endsWith('.jpg')) {
+        res.setHeader('Content-Type', 'image/jpeg');
+      } else if (filePath.endsWith('.png')) {
+        res.setHeader('Content-Type', 'image/png');
+      } else if (filePath.endsWith('.gif')) {
+        res.setHeader('Content-Type', 'image/gif');
+      } else if (filePath.endsWith('.webp')) {
+        res.setHeader('Content-Type', 'image/webp');
+      }
+    }
+  }));
+  
   // Auth middleware
   await setupAuth(app);
 
