@@ -6,7 +6,17 @@
  */
 
 import { Connection, PublicKey, Keypair, Transaction } from '@solana/web3.js';
-import { createMint, getOrCreateAssociatedTokenAccount, mintTo, transfer } from '@solana/spl-token';
+import { 
+  createMint, 
+  getOrCreateAssociatedTokenAccount, 
+  mintTo, 
+  transfer,
+  getAssociatedTokenAddress,
+  getAccount,
+  // Import constants for compatibility
+  TOKEN_PROGRAM_ID,
+  ASSOCIATED_TOKEN_PROGRAM_ID
+} from '@solana/spl-token';
 import { ethers } from 'ethers';
 import { createPublicClient, http, parseEther, formatEther } from 'viem';
 import { base } from 'viem/chains';
@@ -48,16 +58,21 @@ class Web3CLI {
       const publicKey = new PublicKey(walletAddress);
       const tokenMint = new PublicKey(CHONKPUMP_TOKEN_ADDRESS);
       
-      // Get token account
-      const tokenAccount = await getOrCreateAssociatedTokenAccount(
-        this.solanaConnection,
-        Keypair.generate(), // This would need to be the payer's keypair in real use
+      // Try to get associated token address first
+      const associatedTokenAddress = await getAssociatedTokenAddress(
         tokenMint,
         publicKey
       );
       
-      const balance = await this.solanaConnection.getTokenAccountBalance(tokenAccount.address);
-      return parseFloat(balance.value.amount) / Math.pow(10, balance.value.decimals);
+      // Try to get account info without creating
+      try {
+        const tokenAccount = await getAccount(this.solanaConnection, associatedTokenAddress);
+        return Number(tokenAccount.amount) / Math.pow(10, 9); // CHONKPUMP has 9 decimals
+      } catch (accountError) {
+        // Fallback to direct balance check
+        const balance = await this.solanaConnection.getTokenAccountBalance(associatedTokenAddress);
+        return parseFloat(balance.value.amount) / Math.pow(10, balance.value.decimals);
+      }
     } catch (error) {
       console.error('Error getting CHONKPUMP balance:', error);
       return 0;

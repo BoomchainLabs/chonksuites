@@ -4,7 +4,7 @@
  */
 
 import { Connection, PublicKey } from '@solana/web3.js';
-import { getAssociatedTokenAddress, getAccount } from '@solana/spl-token';
+import { CompatibleSPLToken } from './spl-token-compatibility.js';
 import { createPublicClient, http, formatEther } from 'viem';
 import { base } from 'viem/chains';
 
@@ -37,6 +37,7 @@ const ERC20_ABI = [
 export class Web3Service {
   private solanaConnection: Connection;
   private baseClient: any;
+  private splToken: CompatibleSPLToken;
 
   constructor() {
     this.solanaConnection = new Connection(SOLANA_RPC_URL);
@@ -44,6 +45,7 @@ export class Web3Service {
       chain: base,
       transport: http(BASE_RPC_URL)
     });
+    this.splToken = new CompatibleSPLToken(this.solanaConnection);
   }
 
   // Get real token balances for dashboard
@@ -86,13 +88,8 @@ export class Web3Service {
       const publicKey = new PublicKey(walletAddress);
       const chonkpumpMint = new PublicKey(CHONKPUMP_TOKEN_ADDRESS);
       
-      const associatedTokenAddress = await getAssociatedTokenAddress(
-        chonkpumpMint,
-        publicKey
-      );
-
-      const tokenAccount = await getAccount(this.solanaConnection, associatedTokenAddress);
-      return Number(tokenAccount.amount) / Math.pow(10, 9); // CHONKPUMP has 9 decimals
+      // Use the compatibility layer
+      return await this.splToken.getTokenBalance(chonkpumpMint, publicKey);
     } catch (error) {
       console.log('CHONKPUMP token account not found or error:', error);
       return 0;
