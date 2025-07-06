@@ -130,7 +130,7 @@ export default function RealStakingPlatform() {
         poolId,
         amount: parseFloat(amount),
         duration,
-        userWallet: user?.walletAddress,
+        userWallet: user?.walletAddress || '',
         network: selectedPool.network.toLowerCase()
       });
       return response.json();
@@ -159,7 +159,7 @@ export default function RealStakingPlatform() {
       const response = await apiRequest('POST', '/api/staking/unstake', {
         stakeId,
         amount: parseFloat(amount),
-        userWallet: user?.walletAddress
+        userWallet: user?.walletAddress || ''
       });
       return response.json();
     },
@@ -225,9 +225,16 @@ export default function RealStakingPlatform() {
     });
   };
 
-  const userStakes = stakingData || [];
-  const totalStakedValue = userStakes.reduce((sum: number, stake: any) => sum + stake.amount * stake.tokenPrice, 0);
-  const totalPendingRewards = userStakes.reduce((sum: number, stake: any) => sum + stake.pendingRewards, 0);
+  const userStakes = Array.isArray(stakingData) ? stakingData : [];
+  const totalStakedValue = userStakes.reduce((sum: number, stake: any) => {
+    const amount = stake?.amount || 0;
+    const price = stake?.tokenPrice || 1;
+    return sum + (amount * price);
+  }, 0);
+  const totalPendingRewards = userStakes.reduce((sum: number, stake: any) => {
+    const rewards = stake?.pendingRewards || 0;
+    return sum + rewards;
+  }, 0);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 relative">
@@ -588,7 +595,7 @@ export default function RealStakingPlatform() {
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
                           <div className="text-gray-400">Rewards</div>
-                          <div className="text-green-400 font-medium">{stake.pendingRewards.toFixed(4)}</div>
+                          <div className="text-green-400 font-medium">{(stake?.pendingRewards || 0).toFixed(4)}</div>
                         </div>
                         <div>
                           <div className="text-gray-400">Status</div>
