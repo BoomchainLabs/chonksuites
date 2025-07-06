@@ -27,7 +27,7 @@ export default function SimpleDashboard() {
 
   if (!user) {
     return (
-      <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-gray-900 via-purple-900/20 to-cyan-900/20">
+      <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-800">
         <AnimatedBackground />
         
         <div className="relative z-10 flex items-center justify-center min-h-screen p-4">
@@ -60,10 +60,10 @@ export default function SimpleDashboard() {
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-800">
       <AnimatedBackground />
       
-      <div className="relative z-10 p-6 space-y-6">
+      <div className="relative z-10 p-8 space-y-8 max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">

@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import SimpleDashboard from "@/components/simple-dashboard";
-import ProfessionalTrading from "@/components/professional-trading";
+import ProductionTradingDashboard from "@/components/production-trading-dashboard";
 import SlerfTradingHub from "@/components/slerf-trading-hub";
 import DAOGovernance from "@/components/dao-governance";
 import MascotShowcase from "@/components/mascot-showcase";
@@ -45,7 +45,7 @@ function Router() {
         <>
           <Route path="/" component={SimpleDashboard} />
           <Route path="/home" component={SimpleDashboard} />
-          <Route path="/trading" component={ProfessionalTrading} />
+          <Route path="/trading" component={ProductionTradingDashboard} />
           <Route path="/slerf" component={SlerfTradingHub} />
           <Route path="/dao" component={DAOGovernance} />
         </>

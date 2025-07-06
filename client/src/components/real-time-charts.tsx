@@ -301,12 +301,12 @@ const RealTimeChart: React.FC<RealTimeChartProps> = ({
       const currentTime = Math.floor(Date.now() / 1000);
 
       priceSeriesRef.current?.update({
-        time: currentTime,
+        time: currentTime as any,
         value: newPrice
       });
 
       volumeSeriesRef.current?.update({
-        time: currentTime,
+        time: currentTime as any,
         value: Math.random() * 1000000,
         color: change > 0 ? 'rgba(34, 197, 94, 0.8)' : 'rgba(239, 68, 68, 0.8)'
       });
