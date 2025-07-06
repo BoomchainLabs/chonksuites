@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useQuery } from '@tanstack/react-query';
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -13,13 +12,13 @@ import {
   Crown, 
   Medal, 
   Target, 
-  Zap, 
   Users, 
   TrendingUp,
   Gift,
   Flame,
   Diamond,
-  Sparkles
+  Sparkles,
+  CheckCircle
 } from 'lucide-react';
 
 interface Achievement {
@@ -49,19 +48,6 @@ interface LeaderboardEntry {
   avatar: string;
   tier: string;
   recentAchievement?: string;
-}
-
-interface CommunityStats {
-  totalAchievements: number;
-  totalMembers: number;
-  topPerformers: number;
-  weeklyUnlocks: number;
-  rarityDistribution: {
-    common: number;
-    rare: number;
-    epic: number;
-    legendary: number;
-  };
 }
 
 const achievements: Achievement[] = [
@@ -194,7 +180,7 @@ const leaderboard: LeaderboardEntry[] = [
   }
 ];
 
-const communityStats: CommunityStats = {
+const communityStats = {
   totalAchievements: 48,
   totalMembers: 2847,
   topPerformers: 156,
@@ -365,35 +351,14 @@ const LeaderboardEntry: React.FC<{ entry: LeaderboardEntry; index: number }> = (
 
 export default function CommunityAchievements() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [hoveredAchievement, setHoveredAchievement] = useState<string | null>(null);
-
-  // Fetch achievements data from API
-  const { data: achievementsData, isLoading: achievementsLoading } = useQuery({
-    queryKey: ['/api/achievements'],
-    enabled: true
-  });
-
-  const { data: leaderboardData, isLoading: leaderboardLoading } = useQuery({
-    queryKey: ['/api/leaderboard'],
-    enabled: true
-  });
-
-  const { data: communityStatsData, isLoading: statsLoading } = useQuery({
-    queryKey: ['/api/community-stats'],
-    enabled: true
-  });
-
-  const userAchievements = achievementsData?.achievements || achievements;
-  const apiLeaderboard = leaderboardData?.leaderboard || leaderboard;
-  const apiCommunityStats = communityStatsData || communityStats;
 
   const filteredAchievements = selectedCategory === 'all' 
-    ? userAchievements 
-    : userAchievements.filter(a => a.category === selectedCategory);
+    ? achievements 
+    : achievements.filter(a => a.category === selectedCategory);
 
-  const completedAchievements = userAchievements.filter(a => a.completed).length;
-  const totalProgress = userAchievements.reduce((sum, a) => sum + (a.progress / a.maxProgress), 0);
-  const overallProgress = (totalProgress / userAchievements.length) * 100;
+  const completedAchievements = achievements.filter(a => a.completed).length;
+  const totalProgress = achievements.reduce((sum, a) => sum + (a.progress / a.maxProgress), 0);
+  const overallProgress = (totalProgress / achievements.length) * 100;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-800 text-white p-8">
@@ -509,8 +474,6 @@ export default function CommunityAchievements() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
                     transition={{ delay: index * 0.1 }}
-                    onHoverStart={() => setHoveredAchievement(achievement.id)}
-                    onHoverEnd={() => setHoveredAchievement(null)}
                   >
                     <AchievementCard achievement={achievement} />
                   </motion.div>
@@ -521,7 +484,7 @@ export default function CommunityAchievements() {
 
           <TabsContent value="leaderboard" className="space-y-6">
             <div className="space-y-4">
-              {apiLeaderboard.map((entry, index) => (
+              {leaderboard.map((entry, index) => (
                 <LeaderboardEntry key={entry.rank} entry={entry} index={index} />
               ))}
             </div>
@@ -538,7 +501,7 @@ export default function CommunityAchievements() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {Object.entries(apiCommunityStats.rarityDistribution).map(([rarity, percentage]) => (
+                    {Object.entries(communityStats.rarityDistribution).map(([rarity, percentage]) => (
                       <div key={rarity} className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
                           <div className={`w-3 h-3 rounded-full ${getRarityColor(rarity).split(' ')[0].replace('border-', 'bg-')}`} />
@@ -569,7 +532,7 @@ export default function CommunityAchievements() {
                 <CardContent>
                   <div className="text-center space-y-4">
                     <div className="text-4xl font-bold text-yellow-400">
-                      {apiCommunityStats.topPerformers}
+                      {communityStats.topPerformers}
                     </div>
                     <p className="text-gray-400">
                       Members with 10+ achievements
