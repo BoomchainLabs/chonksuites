@@ -737,6 +737,89 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Token Playground API endpoints
+  app.post('/api/playground/interact', async (req, res) => {
+    try {
+      const { mascot, action, energy, happiness } = req.body;
+      
+      if (!mascot || !action) {
+        return res.status(400).json({ error: 'Mascot and action required' });
+      }
+      
+      // Log interaction for analytics
+      console.log(`Playground interaction: ${mascot} - ${action}`);
+      
+      // Calculate rewards based on action
+      const rewards = {
+        feed: { energy: 15, happiness: 10, score: 5 },
+        pet: { energy: 0, happiness: 20, score: 8 },
+        play: { energy: -5, happiness: 15, score: 10 }
+      };
+      
+      const reward = rewards[action as keyof typeof rewards] || { energy: 0, happiness: 0, score: 0 };
+      
+      res.json({
+        success: true,
+        rewards: reward,
+        message: `${mascot} enjoyed the ${action}!`
+      });
+    } catch (error) {
+      console.error('Playground interaction error:', error);
+      res.status(500).json({ error: 'Failed to process interaction' });
+    }
+  });
+
+  app.post('/api/playground/minigame', async (req, res) => {
+    try {
+      const { gameId, score, mascot, duration } = req.body;
+      
+      if (!gameId || typeof score !== 'number') {
+        return res.status(400).json({ error: 'Game ID and score required' });
+      }
+      
+      // Calculate rewards based on performance
+      const baseReward = 10;
+      const performanceMultiplier = Math.max(1, Math.min(3, score / 20));
+      const finalReward = Math.floor(baseReward * performanceMultiplier);
+      
+      // Log game completion
+      console.log(`Minigame completed: ${gameId} - Score: ${score} - Reward: ${finalReward}`);
+      
+      res.json({
+        success: true,
+        reward: finalReward,
+        performanceRating: score > 30 ? 'excellent' : score > 15 ? 'good' : 'fair',
+        message: `Great job! You earned ${finalReward} points.`
+      });
+    } catch (error) {
+      console.error('Minigame completion error:', error);
+      res.status(500).json({ error: 'Failed to complete minigame' });
+    }
+  });
+
+  app.get('/api/playground/stats', async (req, res) => {
+    try {
+      // Mock playground stats - in production, this would come from database
+      const stats = {
+        totalInteractions: 456,
+        dailyInteractions: 23,
+        achievements: ['First Interaction', 'Energy Boost', 'Happy Mascot', 'Game Master'],
+        mascotLevels: {
+          slerf: 3,
+          chonk: 5
+        },
+        totalScore: 2340,
+        gamesPlayed: 78,
+        favoriteGame: 'Energy Boost'
+      };
+      
+      res.json(stats);
+    } catch (error) {
+      console.error('Failed to get playground stats:', error);
+      res.status(500).json({ error: 'Failed to get playground stats' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

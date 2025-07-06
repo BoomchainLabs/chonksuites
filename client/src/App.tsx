@@ -9,6 +9,7 @@ import ProfessionalTrading from "@/components/professional-trading";
 import SlerfTradingHub from "@/components/slerf-trading-hub";
 import DAOGovernance from "@/components/dao-governance";
 import MascotShowcase from "@/components/mascot-showcase";
+import TokenInteractionPlayground from "@/components/token-interaction-playground";
 import Landing from "@/pages/landing";
 import NotFound from "@/pages/not-found";
 
@@ -44,6 +45,7 @@ function Router() {
               </div>
             </div>
           )} />
+          <Route path="/playground" component={TokenInteractionPlayground} />
         </>
       )}
       <Route component={NotFound} />
