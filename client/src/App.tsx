@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import SimpleDashboard from "@/components/simple-dashboard";
 import CleanTradingDashboard from "@/components/clean-trading-dashboard";
+import LiveTradingDashboard from "@/components/live-trading-dashboard";
 import SlerfTradingHub from "@/components/slerf-trading-hub";
 import DAOGovernance from "@/components/dao-governance";
 
@@ -49,7 +50,7 @@ function Router() {
         <>
           <Route path="/" component={SimpleDashboard} />
           <Route path="/home" component={SimpleDashboard} />
-          <Route path="/trading" component={CleanTradingDashboard} />
+          <Route path="/trading" component={LiveTradingDashboard} />
           <Route path="/staking" component={RealStakingPlatform} />
           <Route path="/swap" component={TokenSwapDApp} />
           <Route path="/community" component={GamifiedCommunity} />
