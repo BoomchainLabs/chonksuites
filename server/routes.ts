@@ -1609,6 +1609,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json([]);
   });
 
+  // DAO Governance endpoints
+  app.get('/api/dao/proposals', async (req, res) => {
+    try {
+      // Return empty array for now - this will be populated with real proposals
+      res.json([]);
+    } catch (error) {
+      console.error('Error fetching proposals:', error);
+      res.status(500).json({ message: 'Failed to fetch proposals' });
+    }
+  });
+
+  app.get('/api/dao/voting-power', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req.user as any)?.claims?.sub || req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
+      
+      // Calculate voting power based on user's token holdings
+      const tokenBalances = await storage.getUserTokenBalances(userId);
+      const slerfBalance = tokenBalances.find(b => b.tokenSymbol === 'SLERF')?.balance || 0;
+      const chonkBalance = tokenBalances.find(b => b.tokenSymbol === 'CHONK9K')?.balance || 0;
+      
+      // Voting power = SLERF balance + (CHONK9K balance * 0.5)
+      const votingPower = slerfBalance + (chonkBalance * 0.5);
+      
+      res.json(votingPower);
+    } catch (error) {
+      console.error('Error fetching voting power:', error);
+      res.status(500).json({ message: 'Failed to fetch voting power' });
+    }
+  });
+
+  // Production-ready dashboard endpoints
+  app.get('/api/user/token-balances', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req.user as any)?.claims?.sub || req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
+
+      const tokenBalances = await storage.getUserTokenBalances(userId);
+      
+      // Format balances with real token data
+      const formattedBalances = tokenBalances.map(balance => ({
+        symbol: balance.tokenSymbol,
+        name: balance.tokenSymbol === 'SLERF' ? 'SLERF Token' : 'CHONK9K Token',
+        balance: balance.balance,
+        balanceUSD: balance.balance * (balance.tokenSymbol === 'SLERF' ? 0.023 : 0.0015), // Mock prices for now
+        logo: balance.tokenSymbol === 'SLERF' 
+          ? '/attached_assets/C35612D6-9831-4182-A063-8C0EF2D5D366_1751814704286.jpeg'
+          : '/attached_assets/806ED59A-7B11-4101-953C-13897F5FFD73_1751814799350.jpeg',
+        contractAddress: balance.tokenSymbol === 'SLERF' 
+          ? '0x233df63325933fa3f2dac8e695cd84bb2f91ab07'
+          : 'DnUsQnwNot38V9JbisNC18VHZkae1eKK5N2Dgy55pump',
+        network: balance.tokenSymbol === 'SLERF' ? 'base' : 'solana'
+      }));
+
+      res.json(formattedBalances);
+    } catch (error) {
+      console.error('Error fetching token balances:', error);
+      res.status(500).json({ message: 'Failed to fetch token balances' });
+    }
+  });
+
+  app.get('/api/tasks/active', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req.user as any)?.claims?.sub || req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
+
+      const tasks = await storage.getAllTasks();
+      const userTasks = await storage.getUserTasks(userId);
+      const completedTaskIds = userTasks.map(ut => ut.taskId);
+      
+      // Filter out completed tasks
+      const activeTasks = tasks.filter(task => !completedTaskIds.includes(task.id));
+      
+      res.json(activeTasks);
+    } catch (error) {
+      console.error('Error fetching active tasks:', error);
+      res.status(500).json({ message: 'Failed to fetch active tasks' });
+    }
+  });
+
   // Initialize some sample challenges
   app.post('/api/challenges/init', async (req, res) => {
     try {
