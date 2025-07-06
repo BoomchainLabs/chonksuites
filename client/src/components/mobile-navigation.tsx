@@ -15,7 +15,8 @@ import {
   ArrowUpDown,
   Users,
   Lock,
-  DollarSign
+  DollarSign,
+  Target
 } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import Chonk9kLogo from "@/components/chonk9k-logo";
@@ -25,6 +26,7 @@ const navigationItems = [
   { path: '/trading', label: 'Trading', icon: TrendingUp, description: 'Live $SLERF & $CHONK9K trading' },
   { path: '/staking', label: 'Staking', icon: Lock, description: 'Stake tokens and earn rewards' },
   { path: '/swap', label: 'Swap', icon: ArrowUpDown, description: 'Token swapping interface' },
+  { path: '/challenges', label: 'Challenges', icon: Target, description: 'Community challenges & leaderboard' },
   { path: '/community', label: 'Community', icon: Users, description: 'Trivia, achievements & leaderboard' },
   { path: '/slerf', label: '$SLERF Hub', icon: Zap, description: 'SLERF token trading hub' },
   { path: '/revenue', label: 'Revenue', icon: DollarSign, description: 'Business monetization dashboard' },

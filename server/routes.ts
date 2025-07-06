@@ -1433,6 +1433,269 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Community Challenge API Routes
+  
+  // Get active challenges
+  app.get('/api/challenges/active', async (req, res) => {
+    try {
+      const challenges = await storage.getActiveChallenges();
+      
+      // Add participant count and time remaining to each challenge
+      const enrichedChallenges = await Promise.all(challenges.map(async (challenge) => {
+        const participations = await storage.getChallengeParticipations('');
+        const participantCount = participations.filter(p => p.challengeId === challenge.id).length;
+        
+        const now = new Date();
+        const endDate = new Date(challenge.endDate);
+        const timeRemaining = endDate.getTime() - now.getTime();
+        
+        return {
+          ...challenge,
+          participantCount,
+          timeRemaining: timeRemaining > 0 ? `${Math.floor(timeRemaining / (1000 * 60 * 60 * 24))}d ${Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))}h` : 'Ended'
+        };
+      }));
+      
+      res.json(enrichedChallenges);
+    } catch (error) {
+      console.error('Error fetching active challenges:', error);
+      res.status(500).json({ message: 'Failed to fetch challenges' });
+    }
+  });
+
+  // Get user's challenge participations
+  app.get('/api/challenges/participations', isAuthenticated, async (req: any, res) => {
+    try {
+      let userId: string | null = null;
+      
+      // Check for wallet-based session first
+      const sessionData = req.session as any;
+      if (sessionData && sessionData.userId) {
+        userId = sessionData.userId;
+      }
+      // Fallback to Replit auth
+      else if (req.user && req.user.claims) {
+        userId = req.user.claims.sub;
+      }
+
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const participations = await storage.getChallengeParticipations(userId);
+      res.json(participations);
+    } catch (error) {
+      console.error('Error fetching user participations:', error);
+      res.status(500).json({ message: 'Failed to fetch participations' });
+    }
+  });
+
+  // Join a challenge
+  app.post('/api/challenges/:challengeId/join', isAuthenticated, async (req: any, res) => {
+    try {
+      let userId: string | null = null;
+      
+      // Check for wallet-based session first
+      const sessionData = req.session as any;
+      if (sessionData && sessionData.userId) {
+        userId = sessionData.userId;
+      }
+      // Fallback to Replit auth
+      else if (req.user && req.user.claims) {
+        userId = req.user.claims.sub;
+      }
+
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const { challengeId } = req.params;
+      
+      // Check if challenge exists and is active
+      const challenge = await storage.getChallenge(challengeId);
+      if (!challenge || !challenge.isActive) {
+        return res.status(404).json({ message: 'Challenge not found or inactive' });
+      }
+
+      // Check if user is already participating
+      const existingParticipation = await storage.getChallengeParticipation(challengeId, userId);
+      if (existingParticipation) {
+        return res.status(400).json({ message: 'Already participating in this challenge' });
+      }
+
+      // Join the challenge
+      const participation = await storage.joinChallenge({
+        challengeId,
+        userId,
+        currentProgress: 0,
+        isCompleted: false,
+        rewardEarned: 0,
+        rank: null
+      });
+
+      res.json({ success: true, participation });
+    } catch (error) {
+      console.error('Error joining challenge:', error);
+      res.status(500).json({ message: 'Failed to join challenge' });
+    }
+  });
+
+  // Claim challenge reward
+  app.post('/api/challenges/:challengeId/claim', isAuthenticated, async (req: any, res) => {
+    try {
+      let userId: string | null = null;
+      
+      // Check for wallet-based session first
+      const sessionData = req.session as any;
+      if (sessionData && sessionData.userId) {
+        userId = sessionData.userId;
+      }
+      // Fallback to Replit auth
+      else if (req.user && req.user.claims) {
+        userId = req.user.claims.sub;
+      }
+
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const { challengeId } = req.params;
+      
+      // Get challenge and participation
+      const challenge = await storage.getChallenge(challengeId);
+      const participation = await storage.getChallengeParticipation(challengeId, userId);
+      
+      if (!challenge || !participation) {
+        return res.status(404).json({ message: 'Challenge or participation not found' });
+      }
+
+      if (!participation.isCompleted) {
+        return res.status(400).json({ message: 'Challenge not completed yet' });
+      }
+
+      if (participation.rewardEarned > 0) {
+        return res.status(400).json({ message: 'Reward already claimed' });
+      }
+
+      // Calculate reward based on challenge pool and participant rank
+      const baseReward = Math.floor(challenge.rewardPool / 10); // 10% of pool for completion
+      const rankBonus = participation.rank ? Math.max(0, 100 - participation.rank * 10) : 0;
+      const finalReward = baseReward + rankBonus;
+
+      // Complete challenge and give reward
+      const updatedParticipation = await storage.completeChallengeAndClaim(challengeId, userId, finalReward);
+      
+      // Log reward activity
+      await storage.createActivity({
+        userId,
+        type: 'challenge_completed',
+        description: `Completed challenge: ${challenge.title}`,
+        reward: finalReward
+      });
+
+      res.json({ 
+        success: true, 
+        rewardEarned: finalReward,
+        participation: updatedParticipation 
+      });
+    } catch (error) {
+      console.error('Error claiming reward:', error);
+      res.status(500).json({ message: 'Failed to claim reward' });
+    }
+  });
+
+  // Get leaderboard
+  app.get('/api/leaderboard/:category?', async (req, res) => {
+    try {
+      const category = req.params.category || 'all_time';
+      const leaderboard = await storage.getLeaderboard(category);
+      
+      // Enrich with user data
+      const enrichedLeaderboard = await Promise.all(leaderboard.map(async (entry) => {
+        const user = await storage.getUser(entry.userId);
+        return {
+          ...entry,
+          username: user?.username || user?.email?.split('@')[0] || 'Anonymous',
+          profileImageUrl: user?.profileImageUrl || null
+        };
+      }));
+
+      res.json(enrichedLeaderboard);
+    } catch (error) {
+      console.error('Error fetching leaderboard:', error);
+      res.status(500).json({ message: 'Failed to fetch leaderboard' });
+    }
+  });
+
+  // Initialize some sample challenges
+  app.post('/api/challenges/init', async (req, res) => {
+    try {
+      const existingChallenges = await storage.getAllChallenges();
+      
+      if (existingChallenges.length === 0) {
+        const now = new Date();
+        const oneWeekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+        
+        const sampleChallenges = [
+          {
+            title: 'Trading Volume Master',
+            description: 'Achieve $10,000 in trading volume this week',
+            challengeType: 'trading_volume' as const,
+            targetValue: 10000,
+            rewardPool: 5000,
+            rewardType: 'SLERF' as const,
+            startDate: now,
+            endDate: oneWeekFromNow,
+            maxParticipants: 100,
+            isActive: true,
+            difficulty: 'hard' as const,
+            icon: 'TrendingUp',
+            badgeUrl: null
+          },
+          {
+            title: 'Referral Champion',
+            description: 'Refer 5 new users to earn massive rewards',
+            challengeType: 'referrals' as const,
+            targetValue: 5,
+            rewardPool: 3000,
+            rewardType: 'CHONK9K' as const,
+            startDate: now,
+            endDate: oneWeekFromNow,
+            maxParticipants: 50,
+            isActive: true,
+            difficulty: 'medium' as const,
+            icon: 'Users',
+            badgeUrl: null
+          },
+          {
+            title: 'Login Streak Legend',
+            description: 'Maintain a 30-day login streak',
+            challengeType: 'login_streak' as const,
+            targetValue: 30,
+            rewardPool: 2000,
+            rewardType: 'SLERF' as const,
+            startDate: now,
+            endDate: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
+            maxParticipants: null,
+            isActive: true,
+            difficulty: 'legendary' as const,
+            icon: 'Zap',
+            badgeUrl: null
+          }
+        ];
+
+        for (const challenge of sampleChallenges) {
+          await storage.createChallenge(challenge);
+        }
+      }
+
+      res.json({ message: 'Challenges initialized successfully' });
+    } catch (error) {
+      console.error('Error initializing challenges:', error);
+      res.status(500).json({ message: 'Failed to initialize challenges' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

@@ -165,6 +165,51 @@ export const userStakes = pgTable("user_stakes", {
   isActive: boolean("is_active").default(true),
 });
 
+// Community Challenges
+export const challenges = pgTable("challenges", {
+  id: varchar("id").primaryKey().notNull().default(nanoid()),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  challengeType: text("challenge_type").notNull(), // 'trading_volume', 'referrals', 'social_share', 'login_streak', 'staking'
+  targetValue: integer("target_value").notNull(),
+  rewardPool: integer("reward_pool").notNull(), // Total reward pool in tokens
+  rewardType: text("reward_type").notNull(), // 'SLERF' or 'CHONK9K'
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date").notNull(),
+  maxParticipants: integer("max_participants"),
+  isActive: boolean("is_active").default(true),
+  difficulty: text("difficulty").notNull().default('medium'), // 'easy', 'medium', 'hard', 'legendary'
+  icon: text("icon").notNull(),
+  badgeUrl: text("badge_url"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Challenge Participations
+export const challengeParticipations = pgTable("challenge_participations", {
+  id: varchar("id").primaryKey().notNull().default(nanoid()),
+  challengeId: varchar("challenge_id").notNull().references(() => challenges.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  currentProgress: integer("current_progress").default(0),
+  isCompleted: boolean("is_completed").default(false),
+  completedAt: timestamp("completed_at"),
+  rewardEarned: integer("reward_earned").default(0),
+  rank: integer("rank"),
+  joinedAt: timestamp("joined_at").defaultNow(),
+});
+
+// Community Leaderboard
+export const leaderboardEntries = pgTable("leaderboard_entries", {
+  id: varchar("id").primaryKey().notNull().default(nanoid()),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  category: text("category").notNull(), // 'weekly', 'monthly', 'all_time', 'challenge_specific'
+  points: integer("points").notNull(),
+  rank: integer("rank").notNull(),
+  rewardsClaimed: integer("rewards_claimed").default(0),
+  lastUpdated: timestamp("last_updated").defaultNow(),
+  weekOf: timestamp("week_of"), // For weekly leaderboards
+  monthOf: timestamp("month_of"), // For monthly leaderboards
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   createdAt: true,
@@ -208,6 +253,21 @@ export const insertActivitySchema = createInsertSchema(activities).omit({
   createdAt: true,
 });
 
+export const insertChallengeSchema = createInsertSchema(challenges).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertChallengeParticipationSchema = createInsertSchema(challengeParticipations).omit({
+  id: true,
+  joinedAt: true,
+});
+
+export const insertLeaderboardEntrySchema = createInsertSchema(leaderboardEntries).omit({
+  id: true,
+  lastUpdated: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -222,3 +282,9 @@ export type Referral = typeof referrals.$inferSelect;
 export type InsertReferral = z.infer<typeof insertReferralSchema>;
 export type Activity = typeof activities.$inferSelect;
 export type InsertActivity = z.infer<typeof insertActivitySchema>;
+export type Challenge = typeof challenges.$inferSelect;
+export type InsertChallenge = z.infer<typeof insertChallengeSchema>;
+export type ChallengeParticipation = typeof challengeParticipations.$inferSelect;
+export type InsertChallengeParticipation = z.infer<typeof insertChallengeParticipationSchema>;
+export type LeaderboardEntry = typeof leaderboardEntries.$inferSelect;
+export type InsertLeaderboardEntry = z.infer<typeof insertLeaderboardEntrySchema>;

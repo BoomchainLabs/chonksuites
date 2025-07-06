@@ -1,8 +1,10 @@
 import { 
-  users, tasks, userTasks, tokenBalances, referrals, activities,
+  users, tasks, userTasks, tokenBalances, referrals, activities, challenges, challengeParticipations, leaderboardEntries,
   type User, type InsertUser, type UpsertUser, type Task, type InsertTask, 
   type UserTask, type InsertUserTask, type TokenBalance, type InsertTokenBalance,
-  type Referral, type InsertReferral, type Activity, type InsertActivity
+  type Referral, type InsertReferral, type Activity, type InsertActivity,
+  type Challenge, type InsertChallenge, type ChallengeParticipation, type InsertChallengeParticipation,
+  type LeaderboardEntry, type InsertLeaderboardEntry
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte } from "drizzle-orm";
@@ -50,6 +52,25 @@ export interface IStorage {
   
   // Claims
   claimRewards(userId: string): Promise<{ claimed: number }>;
+  
+  // Challenge operations
+  getAllChallenges(): Promise<Challenge[]>;
+  getActiveChallenges(): Promise<Challenge[]>;
+  getChallenge(id: string): Promise<Challenge | undefined>;
+  createChallenge(challenge: InsertChallenge): Promise<Challenge>;
+  updateChallenge(id: string, updates: Partial<Challenge>): Promise<Challenge>;
+  
+  // Challenge participation operations
+  getChallengeParticipations(userId: string): Promise<ChallengeParticipation[]>;
+  getChallengeParticipation(challengeId: string, userId: string): Promise<ChallengeParticipation | undefined>;
+  joinChallenge(participation: InsertChallengeParticipation): Promise<ChallengeParticipation>;
+  updateChallengeProgress(challengeId: string, userId: string, progress: number): Promise<ChallengeParticipation>;
+  completeChallengeAndClaim(challengeId: string, userId: string, rewardAmount: number): Promise<ChallengeParticipation>;
+  
+  // Leaderboard operations
+  getLeaderboard(category: string): Promise<LeaderboardEntry[]>;
+  updateLeaderboardEntry(entry: InsertLeaderboardEntry): Promise<LeaderboardEntry>;
+  calculateAndUpdateRankings(category: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -303,6 +324,131 @@ export class DatabaseStorage implements IStorage {
     }
 
     return { claimed: pendingRewards };
+  }
+
+  // Challenge operations
+  async getAllChallenges(): Promise<Challenge[]> {
+    return await db.select().from(challenges);
+  }
+
+  async getActiveChallenges(): Promise<Challenge[]> {
+    const now = new Date();
+    return await db.select().from(challenges)
+      .where(and(
+        eq(challenges.isActive, true),
+        gte(challenges.endDate, now)
+      ));
+  }
+
+  async getChallenge(id: string): Promise<Challenge | undefined> {
+    const [challenge] = await db.select().from(challenges).where(eq(challenges.id, id));
+    return challenge;
+  }
+
+  async createChallenge(insertChallenge: InsertChallenge): Promise<Challenge> {
+    const [challenge] = await db.insert(challenges).values(insertChallenge).returning();
+    return challenge;
+  }
+
+  async updateChallenge(id: string, updates: Partial<Challenge>): Promise<Challenge> {
+    const [challenge] = await db.update(challenges)
+      .set(updates)
+      .where(eq(challenges.id, id))
+      .returning();
+    return challenge;
+  }
+
+  // Challenge participation operations
+  async getChallengeParticipations(userId: string): Promise<ChallengeParticipation[]> {
+    return await db.select().from(challengeParticipations)
+      .where(eq(challengeParticipations.userId, userId));
+  }
+
+  async getChallengeParticipation(challengeId: string, userId: string): Promise<ChallengeParticipation | undefined> {
+    const [participation] = await db.select().from(challengeParticipations)
+      .where(and(
+        eq(challengeParticipations.challengeId, challengeId),
+        eq(challengeParticipations.userId, userId)
+      ));
+    return participation;
+  }
+
+  async joinChallenge(insertParticipation: InsertChallengeParticipation): Promise<ChallengeParticipation> {
+    const [participation] = await db.insert(challengeParticipations)
+      .values(insertParticipation)
+      .returning();
+    return participation;
+  }
+
+  async updateChallengeProgress(challengeId: string, userId: string, progress: number): Promise<ChallengeParticipation> {
+    const [participation] = await db.update(challengeParticipations)
+      .set({ currentProgress: progress })
+      .where(and(
+        eq(challengeParticipations.challengeId, challengeId),
+        eq(challengeParticipations.userId, userId)
+      ))
+      .returning();
+    return participation;
+  }
+
+  async completeChallengeAndClaim(challengeId: string, userId: string, rewardAmount: number): Promise<ChallengeParticipation> {
+    const [participation] = await db.update(challengeParticipations)
+      .set({ 
+        isCompleted: true,
+        completedAt: new Date(),
+        rewardEarned: rewardAmount
+      })
+      .where(and(
+        eq(challengeParticipations.challengeId, challengeId),
+        eq(challengeParticipations.userId, userId)
+      ))
+      .returning();
+
+    // Update user's pending rewards
+    const user = await this.getUser(userId);
+    if (user) {
+      await this.updateUser(userId, {
+        pendingRewards: (user.pendingRewards || 0) + rewardAmount
+      });
+    }
+
+    return participation;
+  }
+
+  // Leaderboard operations
+  async getLeaderboard(category: string): Promise<LeaderboardEntry[]> {
+    return await db.select().from(leaderboardEntries)
+      .where(eq(leaderboardEntries.category, category))
+      .orderBy(leaderboardEntries.rank);
+  }
+
+  async updateLeaderboardEntry(insertEntry: InsertLeaderboardEntry): Promise<LeaderboardEntry> {
+    const [entry] = await db.insert(leaderboardEntries)
+      .values(insertEntry)
+      .onConflictDoUpdate({
+        target: [leaderboardEntries.userId, leaderboardEntries.category],
+        set: {
+          points: insertEntry.points,
+          rewardsClaimed: insertEntry.rewardsClaimed,
+          lastUpdated: new Date()
+        }
+      })
+      .returning();
+    return entry;
+  }
+
+  async calculateAndUpdateRankings(category: string): Promise<void> {
+    // Get all entries for this category sorted by points
+    const entries = await db.select().from(leaderboardEntries)
+      .where(eq(leaderboardEntries.category, category))
+      .orderBy(leaderboardEntries.points);
+
+    // Update ranks
+    for (let i = 0; i < entries.length; i++) {
+      await db.update(leaderboardEntries)
+        .set({ rank: i + 1 })
+        .where(eq(leaderboardEntries.id, entries[i].id));
+    }
   }
 }
 
