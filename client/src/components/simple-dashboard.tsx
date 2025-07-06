@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Chonk9kLogo from "@/components/chonk9k-logo";
 import AnimatedBackground from "@/components/animated-background";
+import MobileNavigation from "@/components/mobile-navigation";
 import { Coins, Trophy, Users, TrendingUp, Zap, Star } from "lucide-react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
@@ -39,10 +40,10 @@ export default function SimpleDashboard() {
             <Chonk9kLogo size="xl" animated />
             
             <div className="space-y-4">
-              <h1 className="text-4xl font-bold text-white text-glow">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white text-glow">
                 Chonk9k Suite
               </h1>
-              <p className="text-xl text-gray-300 max-w-md mx-auto">
+              <p className="text-base sm:text-lg lg:text-xl text-gray-300 max-w-md mx-auto px-4">
                 Your Web3 loyalty dashboard for earning $SLERF and $CHONK9K tokens
               </p>
             </div>
@@ -62,24 +63,25 @@ export default function SimpleDashboard() {
   return (
     <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-800">
       <AnimatedBackground />
+      <MobileNavigation />
       
-      <div className="relative z-10 p-8 space-y-8 max-w-7xl mx-auto">
+      <div className="relative z-10 p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center space-x-3 sm:space-x-4">
             <Chonk9kLogo size="md" animated />
             <div>
-              <h1 className="text-2xl font-bold text-white">Welcome back, {displayName}!</h1>
-              <p className="text-gray-400">Your Web3 loyalty dashboard</p>
+              <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-white">Welcome back, {displayName}!</h1>
+              <p className="text-sm sm:text-base text-gray-400">Your Web3 loyalty dashboard</p>
             </div>
           </div>
-          <Badge className="bg-green-500/10 text-green-400 border-green-500/20">
+          <Badge className="bg-green-500/10 text-green-400 border-green-500/20 self-start sm:self-auto">
             Online
           </Badge>
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           <motion.div whileHover={{ scale: 1.02 }}>
             <Card className="glass-card border-purple-500/30">
               <CardHeader className="pb-2">
@@ -154,18 +156,18 @@ export default function SimpleDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Button className="btn-primary h-12">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+              <Button className="btn-primary h-12 mobile-button">
                 <TrendingUp className="w-4 h-4 mr-2" />
-                Start Trading
+                <span className="text-sm sm:text-base">Start Trading</span>
               </Button>
-              <Button variant="outline" className="h-12 border-purple-500/30 text-purple-400 hover:bg-purple-500/10">
+              <Button variant="outline" className="h-12 mobile-button border-purple-500/30 text-purple-400 hover:bg-purple-500/10">
                 <Coins className="w-4 h-4 mr-2" />
-                Complete Tasks
+                <span className="text-sm sm:text-base">Complete Tasks</span>
               </Button>
-              <Button variant="outline" className="h-12 border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10">
+              <Button variant="outline" className="h-12 mobile-button border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 sm:col-span-2 lg:col-span-1">
                 <Trophy className="w-4 h-4 mr-2" />
-                Claim Rewards
+                <span className="text-sm sm:text-base">Claim Rewards</span>
               </Button>
             </div>
           </CardContent>
@@ -174,12 +176,12 @@ export default function SimpleDashboard() {
         {/* Network Status */}
         <Card className="glass-card border-green-500/30">
           <CardContent className="p-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
               <div className="flex items-center space-x-2">
                 <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                <span className="text-green-400">All systems operational</span>
+                <span className="text-green-400 text-sm sm:text-base">All systems operational</span>
               </div>
-              <div className="text-sm text-gray-400">
+              <div className="text-xs sm:text-sm text-gray-400">
                 Solana & Base networks connected
               </div>
             </div>

@@ -6,6 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import MobileNavigation from "@/components/mobile-navigation";
 import { 
   Trophy, 
   Star, 
@@ -131,7 +132,8 @@ export default function AchievementsSimple() {
   const overallProgress = (totalProgress / achievements.length) * 100;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-800 text-white p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-800 text-white p-4 sm:p-6 lg:p-8">
+      <MobileNavigation />
       <div className="max-w-7xl mx-auto">
         {/* Navigation Header */}
         <motion.div 
@@ -185,7 +187,7 @@ export default function AchievementsSimple() {
         </div>
 
         {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -266,7 +268,7 @@ export default function AchievementsSimple() {
             </div>
 
             {/* Achievements Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
               {filteredAchievements.map((achievement, index) => (
                 <motion.div
                   key={achievement.id}

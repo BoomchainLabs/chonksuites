@@ -48,6 +48,12 @@
     @apply bg-background text-foreground antialiased;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    touch-action: manipulation;
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
     background: radial-gradient(ellipse at top, hsl(220, 13%, 12%) 0%, hsl(220, 13%, 9%) 100%);
     min-height: 100vh;
     overflow-x: hidden;
@@ -55,6 +61,66 @@
 
   html {
     scroll-behavior: smooth;
+  }
+  
+  /* Mobile Optimizations */
+  @media (max-width: 768px) {
+    body {
+      font-size: 14px;
+    }
+    
+    .mobile-scroll {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    .mobile-card {
+      min-width: 280px;
+    }
+    
+    .mobile-grid {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+    
+    .mobile-padding {
+      padding: 1rem;
+    }
+    
+    .mobile-text {
+      font-size: 0.875rem;
+    }
+    
+    .mobile-button {
+      min-height: 44px;
+      font-size: 16px;
+    }
+    
+    .mobile-input {
+      font-size: 16px;
+      min-height: 44px;
+    }
+  }
+  
+  /* Touch Improvements */
+  button, a, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+    touch-action: manipulation;
+  }
+  
+  /* Improved scrolling */
+  .smooth-scroll {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Better focus states for mobile */
+  @media (max-width: 768px) {
+    *:focus {
+      outline: 2px solid var(--ring);
+      outline-offset: 2px;
+    }
   }
 }
 
