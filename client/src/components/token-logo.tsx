@@ -1,5 +1,5 @@
-import slerfLogo from "@assets/C35612D6-9831-4182-A063-8C0EF2D5D366_1751792014892.jpeg";
-import chonkpumpLogo from "@assets/806ED59A-7B11-4101-953C-13897F5FFD73_1751792201778.jpeg";
+import slerfLogo from "@assets/C35612D6-9831-4182-A063-8C0EF2D5D366_1751814704286.jpeg";
+import chonkpumpLogo from "@assets/806ED59A-7B11-4101-953C-13897F5FFD73_1751814799350.jpeg";
 
 interface TokenLogoProps {
   tokenSymbol: string;
