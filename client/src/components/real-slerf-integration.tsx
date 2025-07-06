@@ -3,12 +3,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { TrendingUp, TrendingDown, ExternalLink, Activity, DollarSign, Users } from 'lucide-react';
+import slerfLogo from '@assets/C35612D6-9831-4182-A063-8C0EF2D5D366_1751814704286.jpeg';
 
 // Real SLERF token data from GeckoTerminal
 const SLERF_TOKEN_DATA = {
   name: "Slerf",
   symbol: "$lerf",
-  logoUrl: "https://assets.geckoterminal.com/etpssj9w2yaa64do4daq7eev22ya",
+  logoUrl: slerfLogo,
   contractAddress: "0x233df63325933fa3f2dac8e695cd84bb2f91ab07",
   poolAddress: "0xbd08f83afd361483f1325dd89cae2aaaa9387080",
   currentPrice: 0.062271,
