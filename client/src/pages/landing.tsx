@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Chonk9kLogo from "@/components/chonk9k-logo";
 import AnimatedBackground from "@/components/animated-background";
-import { ArrowRight, Zap, Coins, Trophy, Users, TrendingUp, GamepadIcon, Sparkles, Star, Rocket, ShoppingBag } from "lucide-react";
+import { ArrowRight, Zap, Coins, Trophy, Users, TrendingUp, GamepadIcon, Sparkles, Star, Rocket, ShoppingBag, User } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function Landing() {
@@ -169,10 +169,18 @@ export default function Landing() {
               size="lg"
               className="btn-primary animate-glow text-2xl px-16 py-8 h-auto rounded-2xl shadow-2xl hover:shadow-purple-500/25 transition-all duration-300"
             >
-              <Rocket className="w-8 h-8 mr-4" />
-              Start Your Journey
+              <User className="w-8 h-8 mr-4" />
+              Login with Replit
               <ArrowRight className="w-8 h-8 ml-4" />
             </Button>
+            <motion.p 
+              className="text-center text-gray-400 text-lg mt-6"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1.2 }}
+            >
+              🔐 Secure Replit Authentication • 🚀 Auto Wallet Detection • ⚡ One-Click Access
+            </motion.p>
           </motion.div>
         </motion.div>
 
