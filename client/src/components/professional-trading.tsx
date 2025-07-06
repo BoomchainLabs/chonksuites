@@ -43,70 +43,7 @@ interface UserEarnings {
 }
 
 // Real token configurations with actual logos
-const REAL_TOKENS: TokenData[] = [
-  {
-    symbol: 'BTC',
-    name: 'Bitcoin',
-    price: 0,
-    change24h: 0,
-    volume24h: 0,
-    marketCap: 0,
-    logo: 'https://cryptologos.cc/logos/bitcoin-btc-logo.png',
-    network: 'ethereum'
-  },
-  {
-    symbol: 'ETH',
-    name: 'Ethereum',
-    price: 0,
-    change24h: 0,
-    volume24h: 0,
-    marketCap: 0,
-    logo: 'https://cryptologos.cc/logos/ethereum-eth-logo.png',
-    network: 'ethereum'
-  },
-  {
-    symbol: 'SOL',
-    name: 'Solana',
-    price: 0,
-    change24h: 0,
-    volume24h: 0,
-    marketCap: 0,
-    logo: 'https://cryptologos.cc/logos/solana-sol-logo.png',
-    network: 'solana'
-  },
-  {
-    symbol: 'USDC',
-    name: 'USD Coin',
-    price: 1.00,
-    change24h: 0,
-    volume24h: 0,
-    marketCap: 0,
-    logo: 'https://cryptologos.cc/logos/usd-coin-usdc-logo.png',
-    network: 'ethereum'
-  },
-  {
-    symbol: '$SLERF',
-    name: '$SLERF Token',
-    price: 0.0234,
-    change24h: 15.67,
-    volume24h: 1250000,
-    marketCap: 12500000,
-    logo: 'https://dd.dexscreener.com/ds-data/tokens/ethereum/0x5aaefe84e0fb3dd1f0fcff6fa7468124986b91bd.png?size=lg&key=5671a5',
-    address: '0x233df63325933fa3f2dac8e695cd84bb2f91ab07', // Real SLERF contract
-    network: 'base'
-  },
-  {
-    symbol: '$CHONK9K',
-    name: '$CHONK9K Token',
-    price: 0.00156,
-    change24h: -3.45,
-    volume24h: 890000,
-    marketCap: 1560000,
-    logo: 'https://pump.mypinata.cloud/ipfs/QmPfCgXrz9Hoc3vyL6VQW5BKSe9Mq7c7G8cGJNhHKHvp3R?img-width=256&img-dpr=2&img-onerror=redirect',
-    address: 'Ak1CnyZPzkCHUpvYrMWFgfv6U1aqLJHgcUJxqzKHGVBN', // Solana address
-    network: 'solana'
-  }
-];
+// Use authentic token data from API instead of hardcoded values
 
 const PriceChart: React.FC<{ tokenSymbol: string; price: number; change24h: number }> = ({ tokenSymbol, price, change24h }) => {
   const [chartData, setChartData] = useState<number[]>([]);
@@ -439,8 +376,38 @@ const EarningsOverview: React.FC<{ earnings: UserEarnings }> = ({ earnings }) =>
 };
 
 export default function ProfessionalTrading() {
-  const [selectedToken, setSelectedToken] = useState<TokenData>(REAL_TOKENS[0]);
-  const [tokens, setTokens] = useState<TokenData[]>(REAL_TOKENS);
+  // Use authentic token data from API
+  const { data: authenticTokens = [] } = useQuery({
+    queryKey: ['/api/tokens/authentic'],
+    queryFn: async () => {
+      const response = await fetch('/api/tokens/authentic');
+      return response.json();
+    }
+  });
+
+  const [selectedToken, setSelectedToken] = useState<TokenData | null>(null);
+  const [tokens, setTokens] = useState<TokenData[]>([]);
+
+  // Initialize tokens when authentic data loads
+  useEffect(() => {
+    if (authenticTokens.length > 0) {
+      const convertedTokens = authenticTokens.map((token: any) => ({
+        symbol: token.symbol,
+        name: token.name,
+        price: token.price,
+        change24h: token.change24h,
+        volume24h: token.volume24h,
+        marketCap: token.marketCap,
+        logo: token.logoUrl,
+        address: token.contractAddress,
+        network: token.network
+      }));
+      setTokens(convertedTokens);
+      if (!selectedToken && convertedTokens.length > 0) {
+        setSelectedToken(convertedTokens[0]);
+      }
+    }
+  }, [authenticTokens, selectedToken]);
   
   // Fetch real token prices from CoinGecko API
   const { data: realTokenPrices, isLoading } = useQuery({
@@ -494,51 +461,30 @@ export default function ProfessionalTrading() {
     refetchInterval: 30000 // Refetch every 30 seconds
   });
 
-  // Mock staking pools data
-  const stakingPools: StakingPool[] = [
-    {
-      id: '1',
-      tokenSymbol: 'SLERF',
-      apy: 35.2,
-      totalStaked: 5000000,
-      userStaked: 1500.5,
-      userRewards: 25.67,
-      minStake: 100,
-      lockPeriod: 30,
-      tier: 'Elite'
-    },
-    {
-      id: '2',
-      tokenSymbol: 'CHONK9K',
-      apy: 28.5,
-      totalStaked: 8500000,
-      userStaked: 2300.8,
-      userRewards: 45.23,
-      minStake: 50,
-      lockPeriod: 14,
-      tier: 'Premium'
-    },
-    {
-      id: '3',
-      tokenSymbol: 'SOL',
-      apy: 12.8,
-      totalStaked: 12000000,
-      userStaked: 50.0,
-      userRewards: 2.15,
-      minStake: 1,
-      lockPeriod: 7,
-      tier: 'Basic'
+  // Real staking pools data from API
+  const { data: stakingPools = [] } = useQuery({
+    queryKey: ['/api/staking/pools'],
+    queryFn: async () => {
+      const response = await fetch('/api/staking/pools');
+      return response.json();
     }
-  ];
+  });
 
-  const userEarnings: UserEarnings = {
-    totalEarnings: 15742.38,
-    dailyEarnings: 127.45,
-    stakingRewards: 12834.67,
-    tradingRewards: 2456.89,
-    referralRewards: 450.82,
-    pendingClaims: 89.23
-  };
+  const { data: userEarnings } = useQuery({
+    queryKey: ['/api/user/earnings'],
+    queryFn: async () => {
+      const response = await fetch('/api/user/earnings');
+      return response.json();
+    }
+  });
+
+  const { data: userStats } = useQuery({
+    queryKey: ['/api/user/stats'],
+    queryFn: async () => {
+      const response = await fetch('/api/user/stats');
+      return response.json();
+    }
+  });
 
   // Update token prices when real data is available
   useEffect(() => {

@@ -23,34 +23,9 @@ export function ProductionChallenges() {
     retry: false,
   });
 
-  const mockChallenges = [
-    {
-      id: '1',
-      title: 'Trading Volume Master',
-      description: 'Achieve $10,000 in trading volume',
-      targetValue: 10000,
-      rewardPool: 5000,
-      rewardType: 'SLERF',
-      difficulty: 'hard',
-      icon: 'TrendingUp',
-      isActive: true,
-      participantCount: 45
-    },
-    {
-      id: '2',
-      title: 'Referral Champion',
-      description: 'Refer 5 new users to earn rewards',
-      targetValue: 5,
-      rewardPool: 3000,
-      rewardType: 'CHONK9K',
-      difficulty: 'medium',
-      icon: 'Users',
-      isActive: true,
-      participantCount: 23
-    }
-  ];
+  // Use real challenges from API instead of mock data
 
-  const displayChallenges = Array.isArray(challenges) && challenges.length > 0 ? challenges : mockChallenges;
+  const displayChallenges = Array.isArray(challenges) && challenges.length > 0 ? challenges : [];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-6">

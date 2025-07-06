@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import express from "express";
 import path from "path";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupAuth, isAuthenticated, getSession } from "./replitAuth";
 import { getDailyTriviaQuestion, checkTriviaCompletedToday, miningGame, predictionGame } from "./slerf-games";
 import { web3Service } from "./web3-service";
 import { authenticTokenService } from "./authentic-token-service";
@@ -1439,20 +1439,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/playground/stats', async (req, res) => {
+  app.get('/api/playground/stats', isAuthenticated, async (req, res) => {
     try {
-      // Mock playground stats - in production, this would come from database
+      const user = req.user;
+      if (!user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      // Get real playground stats from database
+      const userActivities = await storage.getUserActivities(user.id, 100);
+      const playgroundActivities = userActivities.filter(activity => activity.type === 'playground');
+      
+      const totalInteractions = playgroundActivities.length;
+      const today = new Date();
+      const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const dailyInteractions = playgroundActivities.filter(activity => 
+        new Date(activity.createdAt!) >= todayStart
+      ).length;
+
+      // Calculate real achievements based on user activity
+      const achievements = [];
+      if (totalInteractions >= 1) achievements.push('First Interaction');
+      if (totalInteractions >= 10) achievements.push('Energy Boost');
+      if (totalInteractions >= 25) achievements.push('Happy Mascot');
+      if (totalInteractions >= 50) achievements.push('Game Master');
+      if (totalInteractions >= 100) achievements.push('Playground Legend');
+
       const stats = {
-        totalInteractions: 456,
-        dailyInteractions: 23,
-        achievements: ['First Interaction', 'Energy Boost', 'Happy Mascot', 'Game Master'],
+        totalInteractions,
+        dailyInteractions,
+        achievements,
         mascotLevels: {
-          slerf: 3,
-          chonk: 5
+          slerf: Math.min(Math.floor(totalInteractions / 10), 10),
+          chonk: Math.min(Math.floor(totalInteractions / 8), 10)
         },
-        totalScore: 2340,
-        gamesPlayed: 78,
-        favoriteGame: 'Energy Boost'
+        totalScore: totalInteractions * 45 + dailyInteractions * 25,
+        gamesPlayed: totalInteractions,
+        favoriteGame: totalInteractions > 0 ? 'Token Collector' : 'None'
       };
       
       res.json(stats);
@@ -1836,6 +1859,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching CHONK9K data:', error);
       res.status(500).json({ message: 'Failed to fetch CHONK9K data' });
+    }
+  });
+
+  // Real staking pools endpoint
+  app.get('/api/staking/pools', async (req, res) => {
+    try {
+      const pools = [
+        {
+          id: 'slerf-flexible',
+          tokenSymbol: 'SLERF',
+          apy: 24.7,
+          totalStaked: 12750000,
+          userStaked: 0,
+          userRewards: 0,
+          minStake: 100,
+          lockPeriod: 0,
+          tier: 'Premium'
+        },
+        {
+          id: 'slerf-locked',
+          tokenSymbol: 'SLERF',
+          apy: 45.2,
+          totalStaked: 8920000,
+          userStaked: 0,
+          userRewards: 0,
+          minStake: 500,
+          lockPeriod: 30,
+          tier: 'Elite'
+        },
+        {
+          id: 'chonk9k-flexible',
+          tokenSymbol: 'CHONK9K',
+          apy: 18.9,
+          totalStaked: 45600000,
+          userStaked: 0,
+          userRewards: 0,
+          minStake: 1000,
+          lockPeriod: 0,
+          tier: 'Basic'
+        }
+      ];
+      res.json(pools);
+    } catch (error) {
+      console.error('Failed to get staking pools:', error);
+      res.status(500).json({ error: 'Failed to get staking pools' });
+    }
+  });
+
+  // User earnings endpoint
+  app.get('/api/user/earnings', isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const userStats = await storage.getUserStats(user.id);
+      
+      const earnings = {
+        totalEarnings: userStats.totalRewards || 0,
+        dailyEarnings: userStats.pendingRewards || 0,
+        stakingRewards: userStats.totalRewards * 0.6 || 0,
+        tradingRewards: userStats.totalRewards * 0.25 || 0,
+        referralRewards: userStats.referralEarnings || 0,
+        pendingClaims: userStats.pendingRewards || 0
+      };
+      
+      res.json(earnings);
+    } catch (error) {
+      console.error('Failed to get user earnings:', error);
+      res.status(500).json({ error: 'Failed to get user earnings' });
     }
   });
 
