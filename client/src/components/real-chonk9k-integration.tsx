@@ -3,24 +3,33 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { TrendingUp, TrendingDown, ExternalLink, Activity, DollarSign, Users, Flame } from 'lucide-react';
+import chonk9kLogo from '@assets/806ED59A-7B11-4101-953C-13897F5FFD73_1751814799350.jpeg';
 
-// Real CHONK9K token data from Pump.fun
+// Real CHONK9K token data from DEXTools + Pump.fun
 const CHONK9K_TOKEN_DATA = {
   name: "CHONKPUMP 9000",
   symbol: "$CHONK9K",
   description: "The most advanced chonk-pumping AI ever built. 🐷💥 Moon-bound, extra thicc, and unstoppable.",
+  logoUrl: chonk9kLogo,
   contractAddress: "DnUsQnwNot38V9JbisNC18VHZkae1eKK5N2Dgy55pump",
-  currentPrice: 0.0000000298,
-  priceChange24h: -0.31,
-  volume24h: 95.81,
-  marketCap: 4517,
-  replies: 0,
-  createdAt: "3/11/2025, 2:12:50 PM",
-  creator: "2Lp2SG",
-  creatorProfile: "2Lp2SGS9AKYVKCrizjzJLPHn4swatnbvEQ2UB2bKorJy",
-  pumpfunUrl: "https://pump.fun/DnUsQnwNot38V9JbisNC18VHZkae1eKK5N2Dgy55pump",
+  currentPrice: 0.00004535, // Real DEXTools price: $0.0₅4535
+  priceChange24h: 2.55, // Real change from DEXTools
+  volume24h: 7.27, // Real 24h volume from DEXTools  
+  marketCap: 4530, // Real market cap: $4.53K
+  liquidity: 9400, // $9.4K liquidity from DEXTools
+  holders: 12, // Real holder count from DEXTools
+  totalSupply: 1000000000, // 1.00B $CHONK9K
+  bondingProgress: 4.28, // Bonding curve progress
+  dexScore: 55, // DEXTscore: 55/99
+  contractVerified: true,
+  honeypot: false,
+  freezable: false,
+  mintable: false,
   network: "Solana",
-  platform: "Pump.fun"
+  platform: "Pump.fun",
+  dextoolsUrl: "https://www.dextools.io/app/en/solana/pair-explorer/DnUsQnwNot38V9JbisNC18VHZkae1eKK5N2Dgy55pump",
+  pumpfunUrl: "https://pump.fun/DnUsQnwNot38V9JbisNC18VHZkae1eKK5N2Dgy55pump",
+  solscanUrl: "https://solscan.io/token/DnUsQnwNot38V9JbisNC18VHZkae1eKK5N2Dgy55pump"
 };
 
 interface RealChonk9kIntegrationProps {
@@ -58,9 +67,14 @@ export default function RealChonk9kIntegration({ className }: RealChonk9kIntegra
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="relative">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-r from-orange-500 to-red-500 flex items-center justify-center border-2 border-orange-400">
-                  <span className="text-2xl font-bold text-white">🐷</span>
-                </div>
+                <img 
+                  src={CHONK9K_TOKEN_DATA.logoUrl} 
+                  alt="CHONK9K Logo" 
+                  className="w-16 h-16 rounded-full border-2 border-orange-400 object-cover"
+                  onError={(e) => {
+                    e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='40' fill='%23f97316'/%3E%3Ctext x='50' y='58' font-family='Arial' font-size='24' fill='white' text-anchor='middle'%3E🐷%3C/text%3E%3C/svg%3E";
+                  }}
+                />
                 <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center">
                   <span className="text-xs font-bold text-white">S</span>
                 </div>
@@ -205,42 +219,70 @@ export default function RealChonk9kIntegration({ className }: RealChonk9kIntegra
         </CardContent>
       </Card>
 
-      {/* Trading Actions */}
-      <Card className="bg-gradient-to-r from-orange-900/20 to-purple-900/20 border-orange-500/30">
-        <CardHeader>
-          <CardTitle className="text-white">Trade {CHONK9K_TOKEN_DATA.symbol}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Real DEXTswap Trading Widget */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="bg-gradient-to-r from-orange-900/20 to-purple-900/20 border-orange-500/30">
+          <CardHeader>
+            <CardTitle className="text-white">Trade {CHONK9K_TOKEN_DATA.symbol} - Live DEXTswap</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-slate-900/50 rounded-lg p-2">
+              <iframe 
+                id="dextswap-aggregator-widget-solana"
+                title="DEXTswap Aggregator - CHONK9K"
+                width="100%" 
+                height="420"
+                src="https://www.dextools.io/widget-aggregator/en/swap/solana/DnUsQnwNot38V9JbisNC18VHZkae1eKK5N2Dgy55pump"
+                className="rounded-lg border-0"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-slate-800/50 border-slate-700">
+          <CardHeader>
+            <CardTitle className="text-white">Trading Links</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <Button 
-              className="bg-orange-600 hover:bg-orange-700 text-white h-12"
+              className="w-full bg-orange-600 hover:bg-orange-700 text-white h-12"
               onClick={() => window.open(CHONK9K_TOKEN_DATA.pumpfunUrl, '_blank')}
             >
               <Flame className="w-5 h-5 mr-2" />
-              Buy on Pump.fun
+              Trade on Pump.fun
             </Button>
             <Button 
               variant="outline" 
-              className="border-purple-400 text-purple-400 hover:bg-purple-400/10 h-12"
-              onClick={() => window.open(`https://solscan.io/token/${CHONK9K_TOKEN_DATA.contractAddress}`, '_blank')}
+              className="w-full border-blue-400 text-blue-400 hover:bg-blue-400/10 h-12"
+              onClick={() => window.open(CHONK9K_TOKEN_DATA.dextoolsUrl, '_blank')}
             >
-              <ExternalLink className="w-5 h-5 mr-2" />
+              <ExternalLink className="w-4 h-4 mr-2" />
+              View on DEXTools
+            </Button>
+            <Button 
+              variant="outline" 
+              className="w-full border-purple-400 text-purple-400 hover:bg-purple-400/10 h-12"
+              onClick={() => window.open(CHONK9K_TOKEN_DATA.solscanUrl, '_blank')}
+            >
+              <ExternalLink className="w-4 h-4 mr-2" />
               View on Solscan
             </Button>
-          </div>
-          
-          <div className="mt-4 p-4 bg-orange-900/20 rounded-lg border border-orange-500/30">
-            <div className="flex items-center space-x-2 mb-2">
-              <Flame className="w-4 h-4 text-orange-400" />
-              <span className="text-orange-400 font-medium">Pump.fun Token</span>
+            
+            <div className="mt-4 p-4 bg-orange-900/20 rounded-lg border border-orange-500/30">
+              <div className="flex items-center space-x-2 mb-2">
+                <Flame className="w-4 h-4 text-orange-400" />
+                <span className="text-orange-400 font-medium">DEXTscore: {CHONK9K_TOKEN_DATA.dexScore}/99</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="text-gray-300">✓ Verified Contract</div>
+                <div className="text-gray-300">✓ No Honeypot</div>
+                <div className="text-gray-300">✓ Not Freezable</div>
+                <div className="text-gray-300">✓ Not Mintable</div>
+              </div>
             </div>
-            <p className="text-gray-300 text-sm">
-              This token is live on Pump.fun, the hottest meme coin launchpad on Solana. 
-              Trade directly on their platform for the best experience.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Contract Information */}
       <Card className="bg-slate-800/50 border-slate-700">

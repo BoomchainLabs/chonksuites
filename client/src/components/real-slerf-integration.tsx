@@ -5,24 +5,31 @@ import { Button } from '@/components/ui/button';
 import { TrendingUp, TrendingDown, ExternalLink, Activity, DollarSign, Users } from 'lucide-react';
 import slerfLogo from '@assets/C35612D6-9831-4182-A063-8C0EF2D5D366_1751814704286.jpeg';
 
-// Real SLERF token data from GeckoTerminal
+// Real SLERF token data from DEXTools + GeckoTerminal
 const SLERF_TOKEN_DATA = {
   name: "Slerf",
   symbol: "$lerf",
   logoUrl: slerfLogo,
   contractAddress: "0x233df63325933fa3f2dac8e695cd84bb2f91ab07",
   poolAddress: "0xbd08f83afd361483f1325dd89cae2aaaa9387080",
-  currentPrice: 0.062271,
-  priceChange24h: 0,
-  volume24h: 0,
-  liquidity: 24385.36,
-  holders: 6,
-  marketCap: 24380,
-  fdv: 24380,
+  currentPrice: 0.00000002525, // Real DEXTools price: $0.0₆2525
+  priceChange24h: 0.34, // Real change from DEXTools
+  volume24h: 1.14, // Real 24h volume from DEXTools
+  liquidity: 22400, // $22.4K liquidity from DEXTools
+  holders: 6, // Real holder count
+  marketCap: 25250, // Real market cap: $25.25K
+  fdv: 25250,
+  totalSupply: "100.00B",
   pooledTokens: "99.99B",
   pooledETH: "0.0009165",
+  dexScore: 46, // DEXTscore: 46/99
+  contractVerified: true,
+  buyTax: 0,
+  sellTax: 0,
+  dextoolsUrl: "https://www.dextools.io/app/en/base/pair-explorer/0xbd08f83afd361483f1325dd89cae2aaaa9387080",
   geckoterminalUrl: "https://geckoterminal.com/base/pools/0xbd08f83afd361483f1325dd89cae2aaaa9387080",
   basescanUrl: "https://basescan.org/token/0x233df63325933fa3f2dac8e695cd84bb2f91ab07",
+  uniswapUrl: "https://app.uniswap.org/explore/pools/0xbd08f83afd361483f1325dd89cae2aaaa9387080",
   tradingFee: "1%",
   age: "1 month",
   network: "Base"
@@ -214,36 +221,65 @@ export default function RealSlerfIntegration({ className }: RealSlerfIntegration
         </CardContent>
       </Card>
 
-      {/* Trading Actions */}
-      <Card className="bg-gradient-to-r from-green-900/20 to-blue-900/20 border-green-500/30">
-        <CardHeader>
-          <CardTitle className="text-white">Trade {SLERF_TOKEN_DATA.symbol}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* Real DEXTswap Trading Widget */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="bg-gradient-to-r from-green-900/20 to-blue-900/20 border-green-500/30">
+          <CardHeader>
+            <CardTitle className="text-white">Trade {SLERF_TOKEN_DATA.symbol} - Live DEXTswap</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-slate-900/50 rounded-lg p-2">
+              <iframe 
+                id="dextswap-aggregator-widget"
+                title="DEXTswap Aggregator - SLERF"
+                width="100%" 
+                height="420"
+                src="https://www.dextools.io/widget-aggregator/en/swap/base/0x233df63325933fa3f2dac8e695cd84bb2f91ab07"
+                className="rounded-lg border-0"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-slate-800/50 border-slate-700">
+          <CardHeader>
+            <CardTitle className="text-white">Trading Links</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <Button 
-              className="bg-green-600 hover:bg-green-700 text-white h-12"
-              onClick={() => window.open(SLERF_TOKEN_DATA.geckoterminalUrl, '_blank')}
+              className="w-full bg-green-600 hover:bg-green-700 text-white h-12"
+              onClick={() => window.open(SLERF_TOKEN_DATA.uniswapUrl, '_blank')}
             >
-              Buy on Uniswap
+              <ExternalLink className="w-4 h-4 mr-2" />
+              Trade on Uniswap V3
             </Button>
             <Button 
               variant="outline" 
-              className="border-blue-400 text-blue-400 hover:bg-blue-400/10 h-12"
+              className="w-full border-blue-400 text-blue-400 hover:bg-blue-400/10 h-12"
+              onClick={() => window.open(SLERF_TOKEN_DATA.dextoolsUrl, '_blank')}
+            >
+              <ExternalLink className="w-4 h-4 mr-2" />
+              View on DEXTools
+            </Button>
+            <Button 
+              variant="outline" 
+              className="w-full border-purple-400 text-purple-400 hover:bg-purple-400/10 h-12"
               onClick={() => window.open(SLERF_TOKEN_DATA.basescanUrl, '_blank')}
             >
+              <ExternalLink className="w-4 h-4 mr-2" />
               View on Basescan
             </Button>
             <Button 
               variant="outline" 
-              className="border-purple-400 text-purple-400 hover:bg-purple-400/10 h-12"
+              className="w-full border-orange-400 text-orange-400 hover:bg-orange-400/10 h-12"
               onClick={() => window.open(`https://app.uniswap.org/#/swap?outputCurrency=${SLERF_TOKEN_DATA.contractAddress}`, '_blank')}
             >
-              Add to Wallet
+              <ExternalLink className="w-4 h-4 mr-2" />
+              Add to MetaMask
             </Button>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

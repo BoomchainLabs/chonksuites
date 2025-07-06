@@ -21,6 +21,7 @@ import { useQuery } from '@tanstack/react-query';
 import RealSlerfIntegration from './real-slerf-integration';
 import RealChonk9kIntegration from './real-chonk9k-integration';
 import slerfLogo from '@assets/C35612D6-9831-4182-A063-8C0EF2D5D366_1751814704286.jpeg';
+import chonk9kLogo from '@assets/806ED59A-7B11-4101-953C-13897F5FFD73_1751814799350.jpeg';
 
 interface TokenData {
   symbol: string;
@@ -148,7 +149,15 @@ export default function LiveTradingDashboard() {
               SLERF (Base)
             </TabsTrigger>
             <TabsTrigger value="chonk9k" className="text-white">
-              🐷 CHONK9K (Solana)
+              <img 
+                src={chonk9kLogo} 
+                alt="CHONK9K" 
+                className="w-5 h-5 mr-2 rounded-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='40' fill='%23f97316'/%3E%3Ctext x='50' y='58' font-family='Arial' font-size='24' fill='white' text-anchor='middle'%3E🐷%3C/text%3E%3C/svg%3E";
+                }}
+              />
+              CHONK9K (Solana)
             </TabsTrigger>
           </TabsList>
           
