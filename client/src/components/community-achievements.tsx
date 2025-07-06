@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Link } from 'wouter';
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -18,7 +19,13 @@ import {
   Flame,
   Diamond,
   Sparkles,
-  CheckCircle
+  CheckCircle,
+  Home,
+  BarChart3,
+  GamepadIcon,
+  Terminal,
+  Vote,
+  ArrowLeft
 } from 'lucide-react';
 
 interface Achievement {
@@ -363,11 +370,70 @@ export default function CommunityAchievements() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-800 text-white p-8">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
+        {/* Navigation Header */}
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center justify-between mb-8"
+        >
+          <div className="flex items-center space-x-4">
+            <Link href="/home">
+              <Button variant="outline" size="sm" className="flex items-center space-x-2 border-slate-600 hover:border-slate-500">
+                <ArrowLeft className="w-4 h-4" />
+                <span>Back to Dashboard</span>
+              </Button>
+            </Link>
+            
+            <div className="flex items-center space-x-2">
+              <Trophy className="w-6 h-6 text-yellow-400" />
+              <h2 className="text-xl font-bold text-white">Achievements</h2>
+            </div>
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <Link href="/home">
+              <Button variant="ghost" size="sm" className="flex items-center space-x-2 hover:bg-slate-800/50">
+                <Home className="w-4 h-4" />
+                <span className="hidden md:inline">Home</span>
+              </Button>
+            </Link>
+            
+            <Link href="/trading">
+              <Button variant="ghost" size="sm" className="flex items-center space-x-2 hover:bg-slate-800/50">
+                <BarChart3 className="w-4 h-4" />
+                <span className="hidden md:inline">Trading</span>
+              </Button>
+            </Link>
+            
+            <Link href="/playground">
+              <Button variant="ghost" size="sm" className="flex items-center space-x-2 hover:bg-slate-800/50">
+                <GamepadIcon className="w-4 h-4" />
+                <span className="hidden md:inline">Playground</span>
+              </Button>
+            </Link>
+            
+            <Link href="/terminal">
+              <Button variant="ghost" size="sm" className="flex items-center space-x-2 hover:bg-slate-800/50">
+                <Terminal className="w-4 h-4" />
+                <span className="hidden md:inline">Terminal</span>
+              </Button>
+            </Link>
+            
+            <Link href="/dao">
+              <Button variant="ghost" size="sm" className="flex items-center space-x-2 hover:bg-slate-800/50">
+                <Vote className="w-4 h-4" />
+                <span className="hidden md:inline">DAO</span>
+              </Button>
+            </Link>
+          </div>
+        </motion.div>
+
+        {/* Page Header */}
         <div className="text-center mb-8">
           <motion.h1 
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
             className="text-4xl font-bold bg-gradient-to-r from-purple-400 to-cyan-500 bg-clip-text text-transparent mb-4"
           >
             Community Achievements
