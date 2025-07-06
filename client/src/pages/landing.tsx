@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import Chonk9kLogo from "@/components/chonk9k-logo";
 import TokenMascot from "@/components/token-mascots";
 import MascotShowcase from "@/components/mascot-showcase";
-import { ArrowRight, Shield, TrendingUp, Zap, Globe, Users, Award, Rocket, CheckCircle, Star, Sparkles } from "lucide-react";
+import { ArrowRight, Shield, TrendingUp, Zap, Globe, Users, Award, Rocket, CheckCircle, Star, Sparkles, Terminal } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function Landing() {
@@ -111,7 +111,24 @@ export default function Landing() {
                 <Button 
                   size="lg"
                   variant="outline"
+                  className="border-2 border-green-500/50 text-green-400 hover:bg-green-500/10 hover:border-green-400 px-12 py-6 text-xl font-semibold rounded-2xl backdrop-blur-sm transition-all duration-300 w-full sm:w-auto min-w-[280px] font-mono"
+                  onClick={() => window.location.href = '/terminal'}
+                >
+                  <Terminal className="w-6 h-6 mr-3" />
+                  Hacker Terminal
+                </Button>
+              </motion.div>
+              
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="w-full sm:w-auto"
+              >
+                <Button 
+                  size="lg"
+                  variant="outline"
                   className="border-2 border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10 hover:border-cyan-400 px-12 py-6 text-xl font-semibold rounded-2xl backdrop-blur-sm transition-all duration-300 w-full sm:w-auto min-w-[280px]"
+                  onClick={() => window.location.href = '/trading'}
                 >
                   <TrendingUp className="w-6 h-6 mr-3" />
                   Live Trading

@@ -180,33 +180,39 @@ const SimplePlayground: React.FC = () => {
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex justify-center mb-8">
-          <div className="flex bg-slate-800 rounded-lg p-1">
+        <div className="flex justify-center mb-12">
+          <div className="flex bg-slate-800 rounded-2xl p-2 gap-2 shadow-2xl">
             <button
               onClick={() => setActiveTab('playground')}
-              className={`px-6 py-3 rounded-md flex items-center space-x-2 transition-all ${
-                activeTab === 'playground' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white'
+              className={`px-8 py-4 rounded-xl flex items-center space-x-3 transition-all duration-300 font-medium ${
+                activeTab === 'playground' 
+                  ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/25' 
+                  : 'text-gray-400 hover:text-white hover:bg-slate-700'
               }`}
             >
-              <Gamepad2 className="w-4 h-4" />
+              <Gamepad2 className="w-5 h-5" />
               <span>Playground</span>
             </button>
             <button
               onClick={() => setActiveTab('games')}
-              className={`px-6 py-3 rounded-md flex items-center space-x-2 transition-all ${
-                activeTab === 'games' ? 'bg-cyan-600 text-white' : 'text-gray-400 hover:text-white'
+              className={`px-8 py-4 rounded-xl flex items-center space-x-3 transition-all duration-300 font-medium ${
+                activeTab === 'games' 
+                  ? 'bg-cyan-600 text-white shadow-lg shadow-cyan-600/25' 
+                  : 'text-gray-400 hover:text-white hover:bg-slate-700'
               }`}
             >
-              <Target className="w-4 h-4" />
+              <Target className="w-5 h-5" />
               <span>Mini Games</span>
             </button>
             <button
               onClick={() => setActiveTab('achievements')}
-              className={`px-6 py-3 rounded-md flex items-center space-x-2 transition-all ${
-                activeTab === 'achievements' ? 'bg-pink-600 text-white' : 'text-gray-400 hover:text-white'
+              className={`px-8 py-4 rounded-xl flex items-center space-x-3 transition-all duration-300 font-medium ${
+                activeTab === 'achievements' 
+                  ? 'bg-pink-600 text-white shadow-lg shadow-pink-600/25' 
+                  : 'text-gray-400 hover:text-white hover:bg-slate-700'
               }`}
             >
-              <Trophy className="w-4 h-4" />
+              <Trophy className="w-5 h-5" />
               <span>Achievements</span>
             </button>
           </div>
@@ -317,20 +323,20 @@ const SimplePlayground: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="flex flex-col sm:flex-row gap-6 justify-center">
                       <Button
                         onClick={feedMascot}
-                        className="bg-green-600 hover:bg-green-700 text-white"
+                        className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-xl shadow-lg transition-all duration-300 hover:scale-105"
                       >
-                        <Gift className="w-4 h-4 mr-2" />
-                        Feed
+                        <Gift className="w-5 h-5 mr-3" />
+                        Feed Mascot
                       </Button>
                       <Button
                         onClick={petMascot}
-                        className="bg-pink-600 hover:bg-pink-700 text-white"
+                        className="bg-pink-600 hover:bg-pink-700 text-white px-8 py-3 rounded-xl shadow-lg transition-all duration-300 hover:scale-105"
                       >
-                        <Heart className="w-4 h-4 mr-2" />
-                        Pet
+                        <Heart className="w-5 h-5 mr-3" />
+                        Pet Mascot
                       </Button>
                     </div>
                   </div>

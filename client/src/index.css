@@ -114,6 +114,76 @@
     font-family: 'JetBrains Mono', monospace;
   }
 
+  /* Terminal/Hacker Theme */
+  .terminal-theme {
+    background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+    border: 1px solid #00ff41;
+    box-shadow: 0 0 20px rgba(0, 255, 65, 0.3);
+    font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
+  }
+
+  .matrix-rain {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      to bottom,
+      transparent 0%,
+      rgba(0, 255, 65, 0.05) 50%,
+      transparent 100%
+    );
+    animation: matrix-fall 3s linear infinite;
+  }
+
+  @keyframes matrix-fall {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100vh); }
+  }
+
+  .terminal-text {
+    color: #00ff41;
+    text-shadow: 0 0 5px rgba(0, 255, 65, 0.5);
+    font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
+  }
+
+  .terminal-glow {
+    box-shadow: 
+      0 0 5px rgba(0, 255, 65, 0.3),
+      0 0 10px rgba(0, 255, 65, 0.2),
+      0 0 15px rgba(0, 255, 65, 0.1);
+  }
+
+  .hacker-border {
+    border: 2px solid #00ff41;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+  }
+
+  .terminal-button {
+    background: linear-gradient(135deg, rgba(0, 255, 65, 0.1) 0%, rgba(0, 200, 50, 0.1) 100%);
+    border: 1px solid #00ff41;
+    color: #00ff41;
+    text-shadow: 0 0 5px rgba(0, 255, 65, 0.5);
+    transition: all 0.3s ease;
+  }
+
+  .terminal-button:hover {
+    background: linear-gradient(135deg, rgba(0, 255, 65, 0.2) 0%, rgba(0, 200, 50, 0.2) 100%);
+    box-shadow: 0 0 10px rgba(0, 255, 65, 0.4);
+    transform: translateY(-1px);
+  }
+
+  .terminal-scan {
+    animation: terminal-scan 2s ease-in-out infinite;
+  }
+
+  @keyframes terminal-scan {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+  }
+
   /* Activity Items */
   .activity-item {
     @apply glass-card p-4 hover:bg-white/[0.04] transition-all duration-200;

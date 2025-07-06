@@ -10,6 +10,7 @@ import SlerfTradingHub from "@/components/slerf-trading-hub";
 import DAOGovernance from "@/components/dao-governance";
 import MascotShowcase from "@/components/mascot-showcase";
 import SimplePlayground from "@/components/simple-playground";
+import HackerTerminal from "@/components/hacker-terminal";
 import Landing from "@/pages/landing";
 import NotFound from "@/pages/not-found";
 
@@ -18,6 +19,7 @@ function Router() {
 
   return (
     <Switch>
+      <Route path="/terminal" component={HackerTerminal} />
       <Route path="/playground" component={SimplePlayground} />
       <Route path="/mascots" component={() => (
         <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 text-white p-6">
