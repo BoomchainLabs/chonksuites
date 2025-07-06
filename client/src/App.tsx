@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 // Production-ready components
 import StableDashboard from "@/components/stable-dashboard";
-import SlerfTradingHub from "@/components/slerf-trading-hub";
+import ProductionTradingDashboard from "@/components/production-trading-dashboard";
 import DAOGovernance from "@/components/dao-governance";
 import SimplePlayground from "@/components/simple-playground";
 import HackerTerminal from "@/components/hacker-terminal";
@@ -28,9 +28,9 @@ function Router() {
       ) : (
         <>
           <Route path="/" component={StableDashboard} />
-          <Route path="/trading" component={SlerfTradingHub} />
+          <Route path="/trading" component={ProductionTradingDashboard} />
           <Route path="/staking" component={RealStakingPlatform} />
-          <Route path="/slerf" component={SlerfTradingHub} />
+          <Route path="/slerf" component={ProductionTradingDashboard} />
           <Route path="/revenue" component={MonetizationDashboard} />
           <Route path="/dao" component={DAOGovernance} />
           <Route path="/achievements" component={AchievementsSimple} />

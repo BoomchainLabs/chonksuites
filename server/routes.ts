@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { getDailyTriviaQuestion, checkTriviaCompletedToday, miningGame, predictionGame } from "./slerf-games";
 import { web3Service } from "./web3-service";
+import { authenticTokenService } from "./authentic-token-service";
 import { insertUserTaskSchema, insertActivitySchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -1761,6 +1762,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error initializing challenges:', error);
       res.status(500).json({ message: 'Failed to initialize challenges' });
+    }
+  });
+
+  // Authentic Token Market Data APIs
+  app.get('/api/tokens/market-data', async (req, res) => {
+    try {
+      const marketSummary = await authenticTokenService.getMarketSummary();
+      res.json(marketSummary);
+    } catch (error) {
+      console.error('Error fetching market data:', error);
+      res.status(500).json({ message: 'Failed to fetch market data' });
+    }
+  });
+
+  app.get('/api/tokens/:symbol', async (req, res) => {
+    try {
+      const { symbol } = req.params;
+      if (symbol !== 'SLERF' && symbol !== 'CHONK9K') {
+        return res.status(400).json({ message: 'Invalid token symbol' });
+      }
+      
+      const tokenData = await authenticTokenService.getTokenData(symbol as 'SLERF' | 'CHONK9K');
+      res.json(tokenData);
+    } catch (error) {
+      console.error(`Error fetching ${req.params.symbol} data:`, error);
+      res.status(500).json({ message: 'Failed to fetch token data' });
+    }
+  });
+
+  app.get('/api/tokens/slerf/data', async (req, res) => {
+    try {
+      const slerfData = await authenticTokenService.getSlerfData();
+      res.json(slerfData);
+    } catch (error) {
+      console.error('Error fetching SLERF data:', error);
+      res.status(500).json({ message: 'Failed to fetch SLERF data' });
+    }
+  });
+
+  app.get('/api/tokens/chonk9k/data', async (req, res) => {
+    try {
+      const chonk9kData = await authenticTokenService.getChonk9kData();
+      res.json(chonk9kData);
+    } catch (error) {
+      console.error('Error fetching CHONK9K data:', error);
+      res.status(500).json({ message: 'Failed to fetch CHONK9K data' });
     }
   });
 

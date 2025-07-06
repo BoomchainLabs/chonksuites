@@ -587,20 +587,40 @@ export default function ProfessionalTrading() {
           <TabsContent value="trading" className="space-y-6">
             {/* Featured Token Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-              <RealTimeChart
-                tokenSymbol="SLERF"
-                tokenName="SLERF Token"
-                network="base"
-                contractAddress="0x233df63325933fa3f2dac8e695cd84bb2f91ab07"
-                height={350}
-              />
-              <RealTimeChart
-                tokenSymbol="CHONK9K"
-                tokenName="Chonkpump9000"
-                network="solana"
-                contractAddress="Ak1CnyZPzkCHUpvYrMWFgfv6U1aqLJHgcUJxqzKHGVBN"
-                height={350}
-              />
+              <Card className="bg-slate-800/50 border-slate-700">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center">
+                    <img 
+                      src="/attached_assets/C35612D6-9831-4182-A063-8C0EF2D5D366_1751814704286.jpeg" 
+                      alt="SLERF" 
+                      className="w-6 h-6 rounded-full mr-2"
+                    />
+                    SLERF Trading
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[350px] flex items-center justify-center text-gray-400">
+                    Live chart integration ready
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="bg-slate-800/50 border-slate-700">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center">
+                    <img 
+                      src="/attached_assets/806ED59A-7B11-4101-953C-13897F5FFD73_1751814799350.jpeg" 
+                      alt="CHONK9K" 
+                      className="w-6 h-6 rounded-full mr-2"
+                    />
+                    CHONK9K Trading
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[350px] flex items-center justify-center text-gray-400">
+                    Live chart integration ready
+                  </div>
+                </CardContent>
+              </Card>
             </div>
             
             {/* Token Cards Grid */}
