@@ -22,7 +22,7 @@ import { Link, useLocation } from 'wouter';
 import Chonk9kLogo from "@/components/chonk9k-logo";
 
 const navigationItems = [
-  { path: '/home', label: 'Dashboard', icon: Home, description: 'Your Web3 loyalty hub' },
+  { path: '/', label: 'Dashboard', icon: Home, description: 'Your Web3 loyalty hub' },
   { path: '/trading', label: 'Trading', icon: TrendingUp, description: 'Live $SLERF & $CHONK9K trading' },
   { path: '/staking', label: 'Staking', icon: Lock, description: 'Stake tokens and earn rewards' },
   { path: '/swap', label: 'Swap', icon: ArrowUpDown, description: 'Token swapping interface' },
