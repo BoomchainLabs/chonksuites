@@ -10,18 +10,25 @@ import {
   Gamepad2,
   Terminal,
   Vote,
-  X
+  X,
+  Zap,
+  ArrowUpDown,
+  Users,
+  Lock
 } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import Chonk9kLogo from "@/components/chonk9k-logo";
 
 const navigationItems = [
   { path: '/home', label: 'Dashboard', icon: Home, description: 'Your Web3 loyalty hub' },
-  { path: '/trading', label: 'Trading', icon: TrendingUp, description: 'Professional trading dashboard' },
-  { path: '/achievements', label: 'Achievements', icon: Trophy, description: 'Community achievements' },
+  { path: '/trading', label: 'Trading', icon: TrendingUp, description: 'Live $SLERF & $CHONK9K trading' },
+  { path: '/staking', label: 'Staking', icon: Lock, description: 'Stake tokens and earn rewards' },
+  { path: '/swap', label: 'Swap', icon: ArrowUpDown, description: 'Token swapping interface' },
+  { path: '/community', label: 'Community', icon: Users, description: 'Trivia, achievements & leaderboard' },
+  { path: '/slerf', label: '$SLERF Hub', icon: Zap, description: 'SLERF token trading hub' },
+  { path: '/dao', label: 'DAO', icon: Vote, description: 'Governance and voting' },
   { path: '/playground', label: 'Playground', icon: Gamepad2, description: 'Token mascot interactions' },
-  { path: '/terminal', label: 'Terminal', icon: Terminal, description: 'Hacker terminal interface' },
-  { path: '/dao', label: 'DAO', icon: Vote, description: 'Governance and voting' }
+  { path: '/terminal', label: 'Terminal', icon: Terminal, description: 'Hacker terminal interface' }
 ];
 
 export default function MobileNavigation() {

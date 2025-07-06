@@ -85,17 +85,521 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const completedTaskIds = completedTasksToday.map(task => task.taskId).filter(Boolean);
 
+      // Calculate daily earnings
+      const slerfBalance = tokenBalances.find(t => t.tokenSymbol === 'SLERF')?.balance || 0;
+      const chonk9kBalance = tokenBalances.find(t => t.tokenSymbol === 'CHONK9K')?.balance || 0;
+      
+      // Daily earning rates - users earn these tokens daily
+      const dailySlerfEarning = 25.5; // $SLERF tokens per day
+      const dailyChonk9kEarning = 150.75; // $CHONK9K tokens per day
+
       res.json({
         user,
         tokenBalances,
         stats,
         tasks,
         completedTaskIds,
-        activities
+        activities,
+        earnings: {
+          slerf: {
+            balance: slerfBalance,
+            dailyRate: dailySlerfEarning,
+            symbol: '$SLERF',
+            network: 'Base',
+            address: '0x233df63325933fa3f2dac8e695cd84bb2f91ab07'
+          },
+          chonk9k: {
+            balance: chonk9kBalance,
+            dailyRate: dailyChonk9kEarning,
+            symbol: '$CHONK9K',
+            network: 'Solana',
+            address: 'DnUsQnwNot38V9JbisNC18VHZkae1eKK5N2Dgy55pump'
+          }
+        }
       });
     } catch (error) {
       console.error("Dashboard error:", error);
       res.status(500).json({ message: "Failed to load dashboard" });
+    }
+  });
+
+  // Staking endpoints
+  app.get("/api/staking/pools", isAuthenticated, async (req, res) => {
+    try {
+      const stakingPools = [
+        {
+          id: 'slerf-pool',
+          name: '$SLERF Staking Pool',
+          token: 'SLERF',
+          apy: 18.5,
+          totalStaked: 1250000,
+          minStake: 10,
+          lockPeriod: 0, // Flexible staking
+          rewards: 'Daily $SLERF rewards',
+          network: 'Base',
+          address: '0x233df63325933fa3f2dac8e695cd84bb2f91ab07'
+        },
+        {
+          id: 'chonk9k-pool',
+          name: '$CHONK9K Staking Pool',
+          token: 'CHONK9K',
+          apy: 24.7,
+          totalStaked: 5400000,
+          minStake: 100,
+          lockPeriod: 0, // Flexible staking
+          rewards: 'Daily $CHONK9K rewards',
+          network: 'Solana',
+          address: 'DnUsQnwNot38V9JbisNC18VHZkae1eKK5N2Dgy55pump'
+        }
+      ];
+      
+      res.json(stakingPools);
+    } catch (error) {
+      console.error("Staking pools error:", error);
+      res.status(500).json({ message: "Failed to load staking pools" });
+    }
+  });
+
+  app.get("/api/staking/user-stakes", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      // Get user's current stakes (this would come from database)
+      const userStakes = [
+        {
+          poolId: 'slerf-pool',
+          token: 'SLERF',
+          amount: 450.75,
+          stakedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
+          estimatedRewards: 2.85,
+          apy: 18.5
+        },
+        {
+          poolId: 'chonk9k-pool',
+          token: 'CHONK9K',
+          amount: 1250.00,
+          stakedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
+          estimatedRewards: 8.92,
+          apy: 24.7
+        }
+      ];
+      
+      res.json(userStakes);
+    } catch (error) {
+      console.error("User stakes error:", error);
+      res.status(500).json({ message: "Failed to load user stakes" });
+    }
+  });
+
+  app.post("/api/staking/stake", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { poolId, amount, token } = req.body;
+      
+      if (!poolId || !amount || !token) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+      
+      if (amount <= 0) {
+        return res.status(400).json({ message: "Amount must be greater than 0" });
+      }
+      
+      // Check minimum stake requirements
+      const minStakes = { SLERF: 10, CHONK9K: 100 };
+      if (amount < minStakes[token as keyof typeof minStakes]) {
+        return res.status(400).json({ 
+          message: `Minimum stake for ${token} is ${minStakes[token as keyof typeof minStakes]} tokens` 
+        });
+      }
+      
+      // Simulate staking transaction
+      const stakeResult = {
+        success: true,
+        transactionId: `stake_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        poolId,
+        token,
+        amount,
+        timestamp: new Date(),
+        estimatedApy: token === 'SLERF' ? 18.5 : 24.7
+      };
+      
+      // Log activity
+      await storage.createActivity({
+        userId,
+        type: 'stake',
+        description: `Staked ${amount} ${token} tokens`,
+        reward: 0
+      });
+      
+      res.json(stakeResult);
+    } catch (error) {
+      console.error("Staking error:", error);
+      res.status(500).json({ message: "Failed to stake tokens" });
+    }
+  });
+
+  app.post("/api/staking/unstake", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { poolId, amount, token } = req.body;
+      
+      if (!poolId || !amount || !token) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+      
+      // Simulate unstaking transaction
+      const unstakeResult = {
+        success: true,
+        transactionId: `unstake_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        poolId,
+        token,
+        amount,
+        timestamp: new Date(),
+        rewardsEarned: amount * 0.005 // 0.5% rewards simulation
+      };
+      
+      // Log activity
+      await storage.createActivity({
+        userId,
+        type: 'unstake',
+        description: `Unstaked ${amount} ${token} tokens`,
+        reward: unstakeResult.rewardsEarned
+      });
+      
+      res.json(unstakeResult);
+    } catch (error) {
+      console.error("Unstaking error:", error);
+      res.status(500).json({ message: "Failed to unstake tokens" });
+    }
+  });
+
+  // Gamified Community & Trivia Endpoints
+  app.get("/api/trivia/questions", isAuthenticated, async (req, res) => {
+    try {
+      const triviaQuestions = [
+        {
+          id: 'slerf_1',
+          question: 'What is the contract address of $SLERF token?',
+          options: [
+            '0x233df63325933fa3f2dac8e695cd84bb2f91ab07',
+            '0x123456789abcdef123456789abcdef123456789a',
+            '0xabcdef123456789abcdef123456789abcdef1234',
+            '0x987654321fedcba987654321fedcba9876543210'
+          ],
+          correctAnswer: 0,
+          category: 'slerf',
+          difficulty: 'medium',
+          reward: 25,
+          tokenReward: '$SLERF'
+        },
+        {
+          id: 'chonk9k_1',
+          question: 'Which blockchain network hosts the $CHONK9K token?',
+          options: ['Ethereum', 'Solana', 'Base', 'Polygon'],
+          correctAnswer: 1,
+          category: 'chonk9k',
+          difficulty: 'easy',
+          reward: 50,
+          tokenReward: '$CHONK9K'
+        },
+        {
+          id: 'slerf_2',
+          question: 'What network is $SLERF token deployed on?',
+          options: ['Ethereum', 'Base', 'Arbitrum', 'Optimism'],
+          correctAnswer: 1,
+          category: 'slerf',
+          difficulty: 'easy',
+          reward: 15,
+          tokenReward: '$SLERF'
+        },
+        {
+          id: 'defi_1',
+          question: 'What does APY stand for in DeFi staking?',
+          options: [
+            'Annual Percentage Yield',
+            'Average Price Yearly',
+            'Automated Protocol Yield',
+            'Asset Performance Year'
+          ],
+          correctAnswer: 0,
+          category: 'defi',
+          difficulty: 'medium',
+          reward: 30,
+          tokenReward: '$SLERF'
+        },
+        {
+          id: 'blockchain_1',
+          question: 'What is the purpose of staking in blockchain networks?',
+          options: [
+            'To buy more tokens',
+            'To secure the network and earn rewards',
+            'To trade faster',
+            'To reduce gas fees'
+          ],
+          correctAnswer: 1,
+          category: 'blockchain',
+          difficulty: 'medium',
+          reward: 40,
+          tokenReward: '$CHONK9K'
+        }
+      ];
+      
+      res.json(triviaQuestions);
+    } catch (error) {
+      console.error("Trivia questions error:", error);
+      res.status(500).json({ message: "Failed to load trivia questions" });
+    }
+  });
+
+  app.post("/api/trivia/submit", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { questionId, answer } = req.body;
+      
+      // Mock trivia question data (in real app this would come from database)
+      const questionData = {
+        'slerf_1': { correctAnswer: 0, reward: 25, tokenReward: '$SLERF' },
+        'chonk9k_1': { correctAnswer: 1, reward: 50, tokenReward: '$CHONK9K' },
+        'slerf_2': { correctAnswer: 1, reward: 15, tokenReward: '$SLERF' },
+        'defi_1': { correctAnswer: 0, reward: 30, tokenReward: '$SLERF' },
+        'blockchain_1': { correctAnswer: 1, reward: 40, tokenReward: '$CHONK9K' }
+      };
+      
+      const question = questionData[questionId as keyof typeof questionData];
+      if (!question) {
+        return res.status(404).json({ message: "Question not found" });
+      }
+      
+      const isCorrect = answer === question.correctAnswer;
+      
+      if (isCorrect) {
+        // Award tokens to user
+        const tokenSymbol = question.tokenReward === '$SLERF' ? 'SLERF' : 'CHONK9K';
+        await storage.updateTokenBalance(userId, tokenSymbol, question.reward);
+        
+        // Log activity
+        await storage.createActivity({
+          userId,
+          type: 'trivia',
+          description: `Answered trivia question correctly and earned ${question.reward} ${question.tokenReward}`,
+          reward: question.reward
+        });
+      }
+      
+      res.json({
+        correct: isCorrect,
+        correctAnswer: question.correctAnswer,
+        reward: isCorrect ? question.reward : 0,
+        tokenReward: question.tokenReward
+      });
+    } catch (error) {
+      console.error("Trivia submit error:", error);
+      res.status(500).json({ message: "Failed to submit trivia answer" });
+    }
+  });
+
+  app.get("/api/achievements", isAuthenticated, async (req, res) => {
+    try {
+      const achievements = [
+        {
+          id: 'first_stake',
+          title: 'First Stake',
+          description: 'Make your first token stake',
+          category: 'staking',
+          progress: 1,
+          maxProgress: 1,
+          reward: 100,
+          tokenReward: '$SLERF',
+          isCompleted: true,
+          rarity: 'common'
+        },
+        {
+          id: 'trivia_master',
+          title: 'Trivia Master',
+          description: 'Answer 50 trivia questions correctly',
+          category: 'trivia',
+          progress: 23,
+          maxProgress: 50,
+          reward: 500,
+          tokenReward: '$CHONK9K',
+          isCompleted: false,
+          rarity: 'rare'
+        },
+        {
+          id: 'token_collector',
+          title: 'Token Collector',
+          description: 'Earn 1000 tokens total',
+          category: 'trading',
+          progress: 750,
+          maxProgress: 1000,
+          reward: 200,
+          tokenReward: 'Both',
+          isCompleted: false,
+          rarity: 'epic'
+        },
+        {
+          id: 'community_leader',
+          title: 'Community Leader',
+          description: 'Reach top 10 on leaderboard',
+          category: 'community',
+          progress: 15,
+          maxProgress: 10,
+          reward: 1000,
+          tokenReward: 'Both',
+          isCompleted: false,
+          rarity: 'legendary'
+        }
+      ];
+      
+      res.json(achievements);
+    } catch (error) {
+      console.error("Achievements error:", error);
+      res.status(500).json({ message: "Failed to load achievements" });
+    }
+  });
+
+  app.get("/api/community/leaderboard", isAuthenticated, async (req, res) => {
+    try {
+      const leaderboard = [
+        {
+          id: '1',
+          username: 'CryptoSurfer',
+          level: 25,
+          xp: 12580,
+          slerfBalance: 2450.75,
+          chonk9kBalance: 8920.50,
+          totalEarnings: 1250.30,
+          achievements: 15,
+          rank: 1
+        },
+        {
+          id: '2',
+          username: 'TokenHunter',
+          level: 22,
+          xp: 10240,
+          slerfBalance: 1980.25,
+          chonk9kBalance: 7340.80,
+          totalEarnings: 980.50,
+          achievements: 12,
+          rank: 2
+        },
+        {
+          id: '3',
+          username: 'DeFiMaster',
+          level: 20,
+          xp: 8950,
+          slerfBalance: 1750.60,
+          chonk9kBalance: 6780.90,
+          totalEarnings: 850.75,
+          achievements: 11,
+          rank: 3
+        }
+      ];
+      
+      res.json(leaderboard);
+    } catch (error) {
+      console.error("Leaderboard error:", error);
+      res.status(500).json({ message: "Failed to load leaderboard" });
+    }
+  });
+
+  app.get("/api/community/profile", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const stats = await storage.getUserStats(userId);
+      
+      const profile = {
+        level: Math.floor(stats.totalRewards / 100) + 1,
+        xp: stats.totalRewards * 10,
+        rank: 42, // This would be calculated from actual user rankings
+        achievements: 5,
+        slerfBalance: 450.75,
+        chonk9kBalance: 1250.30,
+        totalEarnings: stats.totalRewards
+      };
+      
+      res.json(profile);
+    } catch (error) {
+      console.error("Profile error:", error);
+      res.status(500).json({ message: "Failed to load profile" });
+    }
+  });
+
+  // Token Swap Endpoints
+  app.get("/api/swap/pairs", isAuthenticated, async (req, res) => {
+    try {
+      const swapPairs = [
+        {
+          id: 'slerf_eth',
+          tokenA: { symbol: 'SLERF', name: '$SLERF Token', logo: '🏄' },
+          tokenB: { symbol: 'ETH', name: 'Ethereum', logo: 'Ξ' },
+          rate: 0.0000234,
+          liquidity: 1250000,
+          volume24h: 89000,
+          fee: 0.3
+        },
+        {
+          id: 'chonk9k_sol',
+          tokenA: { symbol: 'CHONK9K', name: '$CHONK9K Token', logo: '🐱' },
+          tokenB: { symbol: 'SOL', name: 'Solana', logo: '◎' },
+          rate: 0.0000789,
+          liquidity: 890000,
+          volume24h: 45000,
+          fee: 0.25
+        },
+        {
+          id: 'slerf_chonk9k',
+          tokenA: { symbol: 'SLERF', name: '$SLERF Token', logo: '🏄' },
+          tokenB: { symbol: 'CHONK9K', name: '$CHONK9K Token', logo: '🐱' },
+          rate: 15.5,
+          liquidity: 567000,
+          volume24h: 23000,
+          fee: 0.2
+        }
+      ];
+      
+      res.json(swapPairs);
+    } catch (error) {
+      console.error("Swap pairs error:", error);
+      res.status(500).json({ message: "Failed to load swap pairs" });
+    }
+  });
+
+  app.post("/api/swap/execute", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { pairId, amountIn, tokenIn, amountOut, tokenOut } = req.body;
+      
+      if (!pairId || !amountIn || !tokenIn || !amountOut || !tokenOut) {
+        return res.status(400).json({ message: "Missing required swap parameters" });
+      }
+      
+      // Simulate swap transaction
+      const swapResult = {
+        success: true,
+        transactionId: `swap_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        pairId,
+        amountIn,
+        tokenIn,
+        amountOut,
+        tokenOut,
+        timestamp: new Date(),
+        slippage: 0.5,
+        fees: amountIn * 0.003 // 0.3% fee
+      };
+      
+      // Log activity
+      await storage.createActivity({
+        userId,
+        type: 'swap',
+        description: `Swapped ${amountIn} ${tokenIn} for ${amountOut} ${tokenOut}`,
+        reward: 0
+      });
+      
+      res.json(swapResult);
+    } catch (error) {
+      console.error("Swap execution error:", error);
+      res.status(500).json({ message: "Failed to execute swap" });
     }
   });
 

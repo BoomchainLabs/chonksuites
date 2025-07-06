@@ -12,6 +12,9 @@ import DAOGovernance from "@/components/dao-governance";
 import SimplePlayground from "@/components/simple-playground";
 import HackerTerminal from "@/components/hacker-terminal";
 import AchievementsSimple from "@/components/achievements-simple";
+import StakingPlatform from "@/components/staking-platform";
+import GamifiedCommunity from "@/components/gamified-community";
+import TokenSwapDApp from "@/components/token-swap-dapp";
 import WorkingLanding from "@/pages/working-landing";
 import NotFound from "@/pages/not-found";
 
@@ -44,6 +47,9 @@ function Router() {
           <Route path="/" component={SimpleDashboard} />
           <Route path="/home" component={SimpleDashboard} />
           <Route path="/trading" component={CleanTradingDashboard} />
+          <Route path="/staking" component={StakingPlatform} />
+          <Route path="/swap" component={TokenSwapDApp} />
+          <Route path="/community" component={GamifiedCommunity} />
           <Route path="/slerf" component={SlerfTradingHub} />
           <Route path="/dao" component={DAOGovernance} />
           <Route path="/achievements" component={AchievementsSimple} />

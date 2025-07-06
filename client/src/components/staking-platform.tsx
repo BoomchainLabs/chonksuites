@@ -1,437 +1,444 @@
-import { useState } from "react";
-import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { Progress } from "@/components/ui/progress";
-import { Coins, Lock, Unlock, TrendingUp, Clock, Gift, Zap } from "lucide-react";
-import TokenLogo from "@/components/token-logo";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { motion } from 'framer-motion';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
+import { 
+  Coins, 
+  TrendingUp, 
+  Lock, 
+  Unlock, 
+  Timer, 
+  DollarSign,
+  ArrowUpRight,
+  ArrowDownLeft,
+  Sparkles,
+  Shield,
+  Percent,
+  Clock,
+  Gift
+} from 'lucide-react';
 
 interface StakingPool {
   id: string;
-  tokenSymbol: "LERF" | "CHONK9K";
+  name: string;
+  token: string;
   apy: number;
-  minStake: number;
-  lockPeriod: number; // in days
   totalStaked: number;
-  userStaked: number;
-  userRewards: number;
-  canUnstake: boolean;
-  nextUnlockDate?: Date;
+  minStake: number;
+  lockPeriod: number;
+  rewards: string;
+  network: string;
+  address: string;
 }
 
-interface StakingPlatformProps {
-  userId: number;
+interface UserStake {
+  poolId: string;
+  token: string;
+  amount: number;
+  stakedAt: Date;
+  estimatedRewards: number;
+  apy: number;
 }
 
-export default function StakingPlatform({ userId }: StakingPlatformProps) {
-  const [stakeAmounts, setStakeAmounts] = useState<Record<string, string>>({});
-  const [unstakeAmounts, setUnstakeAmounts] = useState<Record<string, string>>({});
+export default function StakingPlatform() {
+  const [stakeAmount, setStakeAmount] = useState('');
+  const [unstakeAmount, setUnstakeAmount] = useState('');
+  const [selectedPool, setSelectedPool] = useState<string>('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Get staking pools data
-  const { data: stakingPools, isLoading } = useQuery({
-    queryKey: ['/api/staking/pools', userId],
-    enabled: !!userId,
+  // Fetch staking pools
+  const { data: stakingPools, isLoading: poolsLoading } = useQuery({
+    queryKey: ['/api/staking/pools'],
   });
 
-  // Get user balances
-  const { data: userBalances } = useQuery({
-    queryKey: ['/api/staking/balances', userId],
-    enabled: !!userId,
+  // Fetch user stakes
+  const { data: userStakes, isLoading: stakesLoading } = useQuery({
+    queryKey: ['/api/staking/user-stakes'],
   });
 
   // Stake tokens mutation
-  const stakeTokensMutation = useMutation({
-    mutationFn: async ({ poolId, amount }: { poolId: string; amount: number }) => {
+  const stakeMutation = useMutation({
+    mutationFn: async ({ poolId, amount, token }: { poolId: string; amount: number; token: string }) => {
       const response = await apiRequest('POST', '/api/staking/stake', {
-        userId,
         poolId,
         amount,
+        token
       });
       return response.json();
     },
-    onSuccess: (data, variables) => {
-      const pool = stakingPools?.find((p: any) => p.id === variables.poolId);
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/staking/user-stakes'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/dashboard'] });
       toast({
         title: "Staking Successful!",
-        description: `Staked ${variables.amount} ${pool?.tokenSymbol} tokens`,
+        description: `Successfully staked ${data.amount} ${data.token} tokens`,
       });
-      setStakeAmounts(prev => ({ ...prev, [variables.poolId]: "" }));
-      queryClient.invalidateQueries({ queryKey: ['/api/staking/pools', userId] });
-      queryClient.invalidateQueries({ queryKey: ['/api/staking/balances', userId] });
-      queryClient.invalidateQueries({ queryKey: ['/api/dashboard', userId] });
+      setStakeAmount('');
     },
+    onError: (error: any) => {
+      toast({
+        title: "Staking Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   });
 
   // Unstake tokens mutation
-  const unstakeTokensMutation = useMutation({
-    mutationFn: async ({ poolId, amount }: { poolId: string; amount: number }) => {
+  const unstakeMutation = useMutation({
+    mutationFn: async ({ poolId, amount, token }: { poolId: string; amount: number; token: string }) => {
       const response = await apiRequest('POST', '/api/staking/unstake', {
-        userId,
         poolId,
         amount,
+        token
       });
       return response.json();
     },
-    onSuccess: (data, variables) => {
-      const pool = stakingPools?.find((p: any) => p.id === variables.poolId);
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/staking/user-stakes'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/dashboard'] });
       toast({
         title: "Unstaking Successful!",
-        description: `Unstaked ${variables.amount} ${pool?.tokenSymbol} tokens`,
+        description: `Successfully unstaked ${data.amount} ${data.token} tokens and earned ${data.rewardsEarned.toFixed(4)} rewards`,
       });
-      setUnstakeAmounts(prev => ({ ...prev, [variables.poolId]: "" }));
-      queryClient.invalidateQueries({ queryKey: ['/api/staking/pools', userId] });
-      queryClient.invalidateQueries({ queryKey: ['/api/staking/balances', userId] });
-      queryClient.invalidateQueries({ queryKey: ['/api/dashboard', userId] });
+      setUnstakeAmount('');
     },
-  });
-
-  // Claim rewards mutation
-  const claimRewardsMutation = useMutation({
-    mutationFn: async (poolId: string) => {
-      const response = await apiRequest('POST', '/api/staking/claim', {
-        userId,
-        poolId,
-      });
-      return response.json();
-    },
-    onSuccess: (data, poolId) => {
-      const pool = stakingPools?.find((p: any) => p.id === poolId);
+    onError: (error: any) => {
       toast({
-        title: "Rewards Claimed!",
-        description: `Claimed ${data.rewards} ${pool?.tokenSymbol} rewards`,
+        title: "Unstaking Failed",
+        description: error.message,
+        variant: "destructive",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/staking/pools', userId] });
-      queryClient.invalidateQueries({ queryKey: ['/api/dashboard', userId] });
-    },
+    }
   });
 
-  const handleStake = (poolId: string) => {
-    const amount = parseFloat(stakeAmounts[poolId] || "0");
-    if (amount > 0) {
-      stakeTokensMutation.mutate({ poolId, amount });
+  const handleStake = (pool: StakingPool) => {
+    const amount = parseFloat(stakeAmount);
+    if (!amount || amount <= 0) {
+      toast({
+        title: "Invalid Amount",
+        description: "Please enter a valid staking amount",
+        variant: "destructive",
+      });
+      return;
     }
-  };
 
-  const handleUnstake = (poolId: string) => {
-    const amount = parseFloat(unstakeAmounts[poolId] || "0");
-    if (amount > 0) {
-      unstakeTokensMutation.mutate({ poolId, amount });
+    if (amount < pool.minStake) {
+      toast({
+        title: "Minimum Stake Required",
+        description: `Minimum stake for ${pool.token} is ${pool.minStake} tokens`,
+        variant: "destructive",
+      });
+      return;
     }
+
+    stakeMutation.mutate({
+      poolId: pool.id,
+      amount,
+      token: pool.token
+    });
   };
 
-  const handleClaimRewards = (poolId: string) => {
-    claimRewardsMutation.mutate(poolId);
+  const handleUnstake = (stake: UserStake) => {
+    const amount = parseFloat(unstakeAmount);
+    if (!amount || amount <= 0) {
+      toast({
+        title: "Invalid Amount",
+        description: "Please enter a valid unstaking amount",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (amount > stake.amount) {
+      toast({
+        title: "Insufficient Stake",
+        description: `You can only unstake up to ${stake.amount} ${stake.token} tokens`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    unstakeMutation.mutate({
+      poolId: stake.poolId,
+      amount,
+      token: stake.token
+    });
   };
 
-  if (isLoading) {
+  const formatNumber = (num: number) => {
+    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
+    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
+    return num.toFixed(2);
+  };
+
+  const calculateDaysStaked = (stakedAt: Date) => {
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - new Date(stakedAt).getTime());
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  };
+
+  if (poolsLoading || stakesLoading) {
     return (
-      <Card className="glass-card">
-        <CardContent className="p-6">
-          <div className="animate-pulse space-y-4">
-            <div className="h-4 bg-gray-600 rounded w-3/4"></div>
-            <div className="h-8 bg-gray-600 rounded w-1/2"></div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-purple-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-300">Loading staking platform...</p>
+        </div>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Staking Overview */}
-      <Card className="glass-card border-purple-500/30">
-        <CardHeader>
-          <CardTitle className="text-lg font-display font-bold flex items-center gap-2">
-            <Coins className="h-5 w-5 text-purple-400" />
-            Staking Platform
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="stat-card p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Lock className="h-4 w-4 text-green-400" />
-                <span className="text-sm font-medium">Total Staked</span>
-              </div>
-              <p className="text-2xl font-bold">
-                ${(stakingPools?.reduce((sum: number, pool: any) => sum + (pool.userStaked * 0.002), 0) || 0).toFixed(2)}
-              </p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      <div className="container mx-auto px-4 py-8">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-8"
+        >
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent mb-4">
+            Token Staking Platform
+          </h1>
+          <p className="text-gray-300 text-lg">
+            Stake your $SLERF and $CHONK9K tokens to earn passive rewards
+          </p>
+        </motion.div>
+
+        <Tabs defaultValue="pools" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2 bg-slate-800/50">
+            <TabsTrigger value="pools" className="data-[state=active]:bg-purple-600">
+              Staking Pools
+            </TabsTrigger>
+            <TabsTrigger value="my-stakes" className="data-[state=active]:bg-purple-600">
+              My Stakes
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="pools" className="space-y-6">
+            <div className="grid lg:grid-cols-2 gap-6">
+              {stakingPools?.map((pool: StakingPool) => (
+                <motion.div
+                  key={pool.id}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: pool.token === 'SLERF' ? 0.1 : 0.2 }}
+                >
+                  <Card className={`bg-gradient-to-br ${
+                    pool.token === 'SLERF' 
+                      ? 'from-purple-600/20 to-cyan-600/20 border-purple-500/30' 
+                      : 'from-orange-600/20 to-yellow-600/20 border-orange-500/30'
+                  }`}>
+                    <CardHeader>
+                      <CardTitle className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <span className="text-2xl">
+                            {pool.token === 'SLERF' ? '🏄' : '🐱'}
+                          </span>
+                          <div>
+                            <h3 className="text-xl font-bold">{pool.name}</h3>
+                            <Badge className={`${
+                              pool.token === 'SLERF' 
+                                ? 'bg-purple-500/20 text-purple-300' 
+                                : 'bg-orange-500/20 text-orange-300'
+                            }`}>
+                              {pool.network}
+                            </Badge>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="flex items-center text-green-400">
+                            <TrendingUp className="w-4 h-4 mr-1" />
+                            <span className="text-2xl font-bold">{pool.apy}%</span>
+                          </div>
+                          <span className="text-sm text-gray-400">APY</span>
+                        </div>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="text-gray-400">Total Staked:</span>
+                          <div className="font-semibold">{formatNumber(pool.totalStaked)} {pool.token}</div>
+                        </div>
+                        <div>
+                          <span className="text-gray-400">Min Stake:</span>
+                          <div className="font-semibold">{pool.minStake} {pool.token}</div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center space-x-2 text-sm text-gray-300">
+                        <Shield className="w-4 h-4" />
+                        <span>{pool.rewards}</span>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div className="flex space-x-2">
+                          <Input
+                            type="number"
+                            placeholder={`Amount to stake (min ${pool.minStake})`}
+                            value={selectedPool === pool.id ? stakeAmount : ''}
+                            onChange={(e) => {
+                              setSelectedPool(pool.id);
+                              setStakeAmount(e.target.value);
+                            }}
+                            className="bg-slate-700/50 border-slate-600"
+                          />
+                          <Button
+                            onClick={() => handleStake(pool)}
+                            disabled={stakeMutation.isPending}
+                            className={`${
+                              pool.token === 'SLERF' 
+                                ? 'bg-purple-600 hover:bg-purple-700' 
+                                : 'bg-orange-600 hover:bg-orange-700'
+                            }`}
+                          >
+                            {stakeMutation.isPending ? (
+                              <div className="flex items-center space-x-2">
+                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                <span>Staking...</span>
+                              </div>
+                            ) : (
+                              <div className="flex items-center space-x-2">
+                                <Lock className="w-4 h-4" />
+                                <span>Stake</span>
+                              </div>
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
             </div>
-            
-            <div className="stat-card p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <TrendingUp className="h-4 w-4 text-blue-400" />
-                <span className="text-sm font-medium">Total Rewards</span>
-              </div>
-              <p className="text-2xl font-bold">
-                ${(stakingPools?.reduce((sum: number, pool: any) => sum + (pool.userRewards * 0.002), 0) || 0).toFixed(2)}
-              </p>
-            </div>
-            
-            <div className="stat-card p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Zap className="h-4 w-4 text-yellow-400" />
-                <span className="text-sm font-medium">Avg APY</span>
-              </div>
-              <p className="text-2xl font-bold text-yellow-400">
-                {stakingPools?.length ? 
-                  (stakingPools.reduce((sum: number, pool: any) => sum + pool.apy, 0) / stakingPools.length).toFixed(1) 
-                  : '0.0'
-                }%
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </TabsContent>
 
-      {/* Staking Pools */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {stakingPools?.map((pool: any) => (
-          <Card key={pool.id} className="glass-card border-green-500/30">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <TokenLogo tokenSymbol={pool.tokenSymbol} size="md" />
-                  <div>
-                    <CardTitle className="text-lg font-display">
-                      {pool.tokenSymbol} Staking
-                    </CardTitle>
-                    <p className="text-sm text-muted-foreground">
-                      {pool.lockPeriod} day lock period
-                    </p>
-                  </div>
-                </div>
-                <Badge className="bg-green-500/20 text-green-400 text-lg font-bold">
-                  {pool.apy}% APY
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                {/* Pool Stats */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Your Staked</p>
-                    <p className="text-lg font-semibold">{pool.userStaked.toFixed(2)} {pool.tokenSymbol}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Pending Rewards</p>
-                    <p className="text-lg font-semibold text-green-400">{pool.userRewards.toFixed(4)} {pool.tokenSymbol}</p>
-                  </div>
-                </div>
-
-                {/* Progress Bar */}
-                <div>
-                  <div className="flex justify-between text-sm mb-2">
-                    <span>Pool Utilization</span>
-                    <span>{((pool.totalStaked / 1000000) * 100).toFixed(1)}%</span>
-                  </div>
-                  <Progress value={(pool.totalStaked / 1000000) * 100} className="h-2" />
-                </div>
-
-                {/* Unlock Timer */}
-                {pool.nextUnlockDate && (
-                  <div className="p-3 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-yellow-400" />
-                      <span className="text-sm font-medium">Unlock Date</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {new Date(pool.nextUnlockDate).toLocaleDateString()}
-                    </p>
-                  </div>
-                )}
-
-                {/* Staking Interface */}
-                <Tabs defaultValue="stake" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="stake">Stake</TabsTrigger>
-                    <TabsTrigger value="unstake">Unstake</TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="stake" className="space-y-3">
-                    <div className="flex items-center justify-between text-sm">
-                      <span>Available Balance</span>
-                      <span className="font-mono">
-                        {userBalances?.[pool.tokenSymbol]?.toFixed(4) || '0.0000'} {pool.tokenSymbol}
-                      </span>
-                    </div>
-                    
-                    <div className="flex gap-2">
-                      <Input
-                        type="number"
-                        placeholder={`Min: ${pool.minStake}`}
-                        value={stakeAmounts[pool.id] || ""}
-                        onChange={(e) => setStakeAmounts(prev => ({ ...prev, [pool.id]: e.target.value }))}
-                        className="flex-1"
-                      />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setStakeAmounts(prev => ({ 
-                          ...prev, 
-                          [pool.id]: userBalances?.[pool.tokenSymbol]?.toFixed(4) || "0" 
-                        }))}
-                      >
-                        Max
-                      </Button>
-                    </div>
-                    
-                    <Button
-                      onClick={() => handleStake(pool.id)}
-                      disabled={
-                        !stakeAmounts[pool.id] || 
-                        parseFloat(stakeAmounts[pool.id]) < pool.minStake ||
-                        stakeTokensMutation.isPending
-                      }
-                      className="w-full bg-green-600 hover:bg-green-700"
-                    >
-                      {stakeTokensMutation.isPending ? (
-                        <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                          Staking...
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <Lock className="h-4 w-4" />
-                          Stake Tokens
-                        </div>
-                      )}
-                    </Button>
-                  </TabsContent>
-                  
-                  <TabsContent value="unstake" className="space-y-3">
-                    <div className="flex items-center justify-between text-sm">
-                      <span>Staked Amount</span>
-                      <span className="font-mono">
-                        {pool.userStaked.toFixed(4)} {pool.tokenSymbol}
-                      </span>
-                    </div>
-                    
-                    <div className="flex gap-2">
-                      <Input
-                        type="number"
-                        placeholder="0.00"
-                        value={unstakeAmounts[pool.id] || ""}
-                        onChange={(e) => setUnstakeAmounts(prev => ({ ...prev, [pool.id]: e.target.value }))}
-                        className="flex-1"
-                        disabled={!pool.canUnstake}
-                      />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setUnstakeAmounts(prev => ({ 
-                          ...prev, 
-                          [pool.id]: pool.userStaked.toFixed(4) 
-                        }))}
-                        disabled={!pool.canUnstake}
-                      >
-                        Max
-                      </Button>
-                    </div>
-                    
-                    <Button
-                      onClick={() => handleUnstake(pool.id)}
-                      disabled={
-                        !pool.canUnstake ||
-                        !unstakeAmounts[pool.id] || 
-                        parseFloat(unstakeAmounts[pool.id]) <= 0 ||
-                        unstakeTokensMutation.isPending
-                      }
-                      className="w-full bg-red-600 hover:bg-red-700"
-                    >
-                      {unstakeTokensMutation.isPending ? (
-                        <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                          Unstaking...
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <Unlock className="h-4 w-4" />
-                          {pool.canUnstake ? 'Unstake Tokens' : 'Locked'}
-                        </div>
-                      )}
-                    </Button>
-                  </TabsContent>
-                </Tabs>
-
-                {/* Claim Rewards */}
-                {pool.userRewards > 0 && (
-                  <Button
-                    onClick={() => handleClaimRewards(pool.id)}
-                    disabled={claimRewardsMutation.isPending}
-                    className="w-full bg-yellow-600 hover:bg-yellow-700"
+          <TabsContent value="my-stakes" className="space-y-6">
+            {userStakes?.length > 0 ? (
+              <div className="space-y-4">
+                {userStakes.map((stake: UserStake, index: number) => (
+                  <motion.div
+                    key={`${stake.poolId}-${index}`}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.1 }}
                   >
-                    {claimRewardsMutation.isPending ? (
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                        Claiming...
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <Gift className="h-4 w-4" />
-                        Claim {pool.userRewards.toFixed(4)} {pool.tokenSymbol}
-                      </div>
-                    )}
-                  </Button>
-                )}
+                    <Card className={`bg-gradient-to-r ${
+                      stake.token === 'SLERF' 
+                        ? 'from-purple-600/10 to-cyan-600/10 border-purple-500/30' 
+                        : 'from-orange-600/10 to-yellow-600/10 border-orange-500/30'
+                    }`}>
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-4">
+                            <span className="text-3xl">
+                              {stake.token === 'SLERF' ? '🏄' : '🐱'}
+                            </span>
+                            <div>
+                              <h3 className="text-xl font-bold">{stake.token} Stake</h3>
+                              <div className="flex items-center space-x-3 text-sm text-gray-400">
+                                <div className="flex items-center">
+                                  <Clock className="w-4 h-4 mr-1" />
+                                  <span>{calculateDaysStaked(stake.stakedAt)} days</span>
+                                </div>
+                                <div className="flex items-center">
+                                  <Percent className="w-4 h-4 mr-1" />
+                                  <span>{stake.apy}% APY</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
 
-                {/* Pool Info */}
-                <div className="text-xs text-muted-foreground space-y-1 pt-2 border-t border-white/10">
-                  <p>• Minimum stake: {pool.minStake} {pool.tokenSymbol}</p>
-                  <p>• Lock period: {pool.lockPeriod} days</p>
-                  <p>• Rewards distributed daily</p>
-                  <p>• Early withdrawal penalty: 5%</p>
-                </div>
+                          <div className="text-right">
+                            <div className="text-2xl font-bold">{stake.amount.toFixed(2)}</div>
+                            <div className="text-sm text-gray-400">{stake.token} staked</div>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4 mt-4">
+                          <div className="bg-slate-700/30 rounded-lg p-3">
+                            <div className="flex items-center text-green-400 mb-1">
+                              <Gift className="w-4 h-4 mr-1" />
+                              <span className="text-sm">Pending Rewards</span>
+                            </div>
+                            <div className="font-bold">{stake.estimatedRewards.toFixed(4)} {stake.token}</div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <div className="flex space-x-2">
+                              <Input
+                                type="number"
+                                placeholder="Amount to unstake"
+                                value={unstakeAmount}
+                                onChange={(e) => setUnstakeAmount(e.target.value)}
+                                className="bg-slate-700/50 border-slate-600"
+                                max={stake.amount}
+                              />
+                              <Button
+                                onClick={() => handleUnstake(stake)}
+                                disabled={unstakeMutation.isPending}
+                                variant="outline"
+                                className="border-red-500 text-red-400 hover:bg-red-500/10"
+                              >
+                                {unstakeMutation.isPending ? (
+                                  <div className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin"></div>
+                                ) : (
+                                  <div className="flex items-center space-x-1">
+                                    <Unlock className="w-4 h-4" />
+                                    <span>Unstake</span>
+                                  </div>
+                                )}
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))}
               </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+            ) : (
+              <Card className="bg-slate-800/50 border-slate-700">
+                <CardContent className="text-center py-12">
+                  <Coins className="w-16 h-16 mx-auto mb-4 text-gray-400 opacity-50" />
+                  <h3 className="text-xl font-semibold mb-2">No Active Stakes</h3>
+                  <p className="text-gray-400 mb-6">
+                    Start staking your tokens to earn passive rewards
+                  </p>
+                  <Button
+                    onClick={() => {
+                      const tabsList = document.querySelector('[role="tablist"]');
+                      const poolsTab = tabsList?.querySelector('[value="pools"]') as HTMLElement;
+                      poolsTab?.click();
+                    }}
+                    className="bg-purple-600 hover:bg-purple-700"
+                  >
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Explore Staking Pools
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+        </Tabs>
 
-      {/* Staking Benefits */}
-      <Card className="glass-card border-blue-500/30">
-        <CardHeader>
-          <CardTitle className="text-lg font-display font-bold flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-blue-400" />
-            Staking Benefits
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="text-center p-4 bg-green-500/10 rounded-lg border border-green-500/20">
-              <Lock className="h-8 w-8 text-green-400 mx-auto mb-2" />
-              <h3 className="font-semibold mb-1">Passive Income</h3>
-              <p className="text-xs text-muted-foreground">Earn rewards automatically</p>
-            </div>
-            
-            <div className="text-center p-4 bg-blue-500/10 rounded-lg border border-blue-500/20">
-              <TrendingUp className="h-8 w-8 text-blue-400 mx-auto mb-2" />
-              <h3 className="font-semibold mb-1">High APY</h3>
-              <p className="text-xs text-muted-foreground">Competitive staking rewards</p>
-            </div>
-            
-            <div className="text-center p-4 bg-purple-500/10 rounded-lg border border-purple-500/20">
-              <Gift className="h-8 w-8 text-purple-400 mx-auto mb-2" />
-              <h3 className="font-semibold mb-1">Bonus Rewards</h3>
-              <p className="text-xs text-muted-foreground">Additional loyalty rewards</p>
-            </div>
-            
-            <div className="text-center p-4 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
-              <Zap className="h-8 w-8 text-yellow-400 mx-auto mb-2" />
-              <h3 className="font-semibold mb-1">Flexible Terms</h3>
-              <p className="text-xs text-muted-foreground">Multiple lock periods</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="text-center mt-8 text-gray-500"
+        >
+          <p>Flexible staking • No lock periods • Compound rewards automatically</p>
+        </motion.div>
+      </div>
     </div>
   );
 }
