@@ -5,14 +5,14 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import SimpleDashboard from "@/components/simple-dashboard";
-import ProductionTradingDashboard from "@/components/production-trading-dashboard";
+import CleanTradingDashboard from "@/components/clean-trading-dashboard";
 import SlerfTradingHub from "@/components/slerf-trading-hub";
 import DAOGovernance from "@/components/dao-governance";
 
 import SimplePlayground from "@/components/simple-playground";
 import HackerTerminal from "@/components/hacker-terminal";
 import AchievementsSimple from "@/components/achievements-simple";
-import Landing from "@/pages/landing";
+import WorkingLanding from "@/pages/working-landing";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -38,12 +38,12 @@ function Router() {
         </div>
       )} />
       {isLoading || !isAuthenticated ? (
-        <Route path="/" component={Landing} />
+        <Route path="/" component={WorkingLanding} />
       ) : (
         <>
           <Route path="/" component={SimpleDashboard} />
           <Route path="/home" component={SimpleDashboard} />
-          <Route path="/trading" component={ProductionTradingDashboard} />
+          <Route path="/trading" component={CleanTradingDashboard} />
           <Route path="/slerf" component={SlerfTradingHub} />
           <Route path="/dao" component={DAOGovernance} />
           <Route path="/achievements" component={AchievementsSimple} />

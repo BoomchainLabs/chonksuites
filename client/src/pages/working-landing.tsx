@@ -20,7 +20,7 @@ import {
   Star
 } from 'lucide-react';
 
-export default function Landing() {
+export default function WorkingLanding() {
   const [walletAddress, setWalletAddress] = useState('');
   const [selectedChain, setSelectedChain] = useState<'solana' | 'base'>('solana');
   const { toast } = useToast();
@@ -76,10 +76,9 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-      <div className="absolute inset-0 bg-grid-pattern opacity-50"></div>
+      <div className="absolute inset-0 opacity-50"></div>
       
       <div className="relative z-10 container mx-auto px-4 py-8">
-        {/* Header */}
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -97,7 +96,6 @@ export default function Landing() {
         </motion.div>
 
         <div className="grid lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
-          {/* Wallet Connection Card */}
           <motion.div
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
@@ -114,7 +112,6 @@ export default function Landing() {
                 </p>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Chain Selection */}
                 <div className="space-y-3">
                   <label className="text-sm font-medium text-gray-300">Select Network:</label>
                   <div className="grid grid-cols-2 gap-2">
@@ -141,7 +138,6 @@ export default function Landing() {
                   </div>
                 </div>
 
-                {/* Wallet Address Input */}
                 <div className="space-y-3">
                   <label className="text-sm font-medium text-gray-300">Wallet Address:</label>
                   <div className="space-y-2">
@@ -163,7 +159,6 @@ export default function Landing() {
                   </div>
                 </div>
 
-                {/* Connect Button */}
                 <Button
                   onClick={handleConnect}
                   disabled={!walletAddress || connectWallet.isPending}
@@ -183,7 +178,6 @@ export default function Landing() {
                   )}
                 </Button>
 
-                {/* Security Notice */}
                 <div className="bg-slate-700/30 border border-slate-600 rounded-lg p-4">
                   <div className="flex items-start space-x-3">
                     <Shield className="w-5 h-5 text-green-400 mt-0.5" />
@@ -199,7 +193,6 @@ export default function Landing() {
             </Card>
           </motion.div>
 
-          {/* Features Overview */}
           <motion.div
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
@@ -258,7 +251,6 @@ export default function Landing() {
               </CardContent>
             </Card>
 
-            {/* Stats Preview */}
             <Card className="bg-slate-800/50 border-green-500/30 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="text-lg">Platform Stats</CardTitle>
@@ -287,7 +279,6 @@ export default function Landing() {
           </motion.div>
         </div>
 
-        {/* Footer */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
