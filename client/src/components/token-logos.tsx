@@ -1,13 +1,10 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 
-import slerfLogo from '@assets/C35612D6-9831-4182-A063-8C0EF2D5D366_1751814704286.jpeg';
-import chonkLogo from '@assets/806ED59A-7B11-4101-953C-13897F5FFD73_1751814799350.jpeg';
-
 // Real token logo URLs
 export const TOKEN_LOGOS = {
-  SLERF: slerfLogo,
-  CHONK9K: chonkLogo,
+  SLERF: 'https://dd.dexscreener.com/ds-data/tokens/ethereum/0x5aaefe84e0fb3dd1f0fcff6fa7468124986b91bd.png?size=lg&key=5671a5',
+  CHONK9K: 'https://pump.mypinata.cloud/ipfs/QmPfCgXrz9Hoc3vyL6VQW5BKSe9Mq7c7G8cGJNhHKHvp3R?img-width=256&img-dpr=2&img-onerror=redirect',
   BTC: 'https://cryptologos.cc/logos/bitcoin-btc-logo.png',
   ETH: 'https://cryptologos.cc/logos/ethereum-eth-logo.png',
   SOL: 'https://cryptologos.cc/logos/solana-sol-logo.png',

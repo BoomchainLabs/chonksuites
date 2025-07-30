@@ -135,7 +135,7 @@ const TradingChart: React.FC<{ tokenSymbol: string }> = ({ tokenSymbol }) => {
     });
 
     // Add line series instead of candlestick for compatibility
-    const lineSeries = chart.addSeries('Line', {
+    const lineSeries = chart.addLineSeries({
       color: '#06b6d4',
       lineWidth: 2,
     });

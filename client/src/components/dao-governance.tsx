@@ -351,15 +351,51 @@ const GovernanceStats: React.FC<{ stats: GovernanceStats }> = ({ stats }) => {
 export default function DAOGovernance() {
   const queryClient = useQueryClient();
 
-  // Fetch proposals from API
-  const { data: proposals = [], isLoading: proposalsLoading } = useQuery<Proposal[]>({
-    queryKey: ['/api/dao/proposals'],
-  });
-
-  // Fetch user voting power
-  const { data: userVotingPower = 0 } = useQuery<number>({
-    queryKey: ['/api/dao/voting-power'],
-  });
+  // Mock data for demonstrations
+  const proposals: Proposal[] = [
+    {
+      id: '1',
+      title: 'Increase Staking Rewards for SLERF Pool',
+      description: 'Proposal to increase the APY for SLERF staking from 35% to 45% to attract more liquidity and reward long-term holders.',
+      proposer: '0x1234...5678',
+      status: 'active',
+      votesFor: 25000,
+      votesAgainst: 8000,
+      totalVotes: 33000,
+      quorum: 50000,
+      endTime: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
+      category: 'governance',
+      requiredStake: 1000
+    },
+    {
+      id: '2',
+      title: 'Treasury Allocation for Marketing Campaign',
+      description: 'Allocate 100,000 USDC from treasury for Q2 marketing campaign to increase platform awareness and user acquisition.',
+      proposer: '0xabcd...efgh',
+      status: 'active',
+      votesFor: 45000,
+      votesAgainst: 12000,
+      totalVotes: 57000,
+      quorum: 50000,
+      endTime: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+      category: 'treasury',
+      requiredStake: 5000
+    },
+    {
+      id: '3',
+      title: 'Implement Cross-Chain Bridge',
+      description: 'Technical proposal to implement a bridge between Solana and Base networks for seamless token transfers.',
+      proposer: '0x9876...4321',
+      status: 'passed',
+      votesFor: 78000,
+      votesAgainst: 22000,
+      totalVotes: 100000,
+      quorum: 50000,
+      endTime: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+      category: 'technical',
+      requiredStake: 2500
+    }
+  ];
 
   const governanceStats: GovernanceStats = {
     totalProposals: 15,

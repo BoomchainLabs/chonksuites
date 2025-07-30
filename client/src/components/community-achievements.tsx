@@ -377,7 +377,7 @@ export default function CommunityAchievements() {
           className="flex items-center justify-between mb-8"
         >
           <div className="flex items-center space-x-4">
-            <Link href="/">
+            <Link href="/home">
               <Button variant="outline" size="sm" className="flex items-center space-x-2 border-slate-600 hover:border-slate-500">
                 <ArrowLeft className="w-4 h-4" />
                 <span>Back to Dashboard</span>
@@ -391,7 +391,7 @@ export default function CommunityAchievements() {
           </div>
           
           <div className="flex items-center space-x-2">
-            <Link href="/">
+            <Link href="/home">
               <Button variant="ghost" size="sm" className="flex items-center space-x-2 hover:bg-slate-800/50">
                 <Home className="w-4 h-4" />
                 <span className="hidden md:inline">Home</span>

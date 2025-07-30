@@ -1,30 +1,12 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import express from "express";
-import path from "path";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated, getSession } from "./replitAuth";
+import { setupAuth, isAuthenticated } from "./replitAuth";
 import { getDailyTriviaQuestion, checkTriviaCompletedToday, miningGame, predictionGame } from "./slerf-games";
 import { web3Service } from "./web3-service";
-import { authenticTokenService } from "./authentic-token-service";
 import { insertUserTaskSchema, insertActivitySchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Static file serving for attached assets (images)
-  app.use('/attached_assets', express.static(path.join(process.cwd(), 'attached_assets'), {
-    setHeaders: (res, filePath) => {
-      if (filePath.endsWith('.jpeg') || filePath.endsWith('.jpg')) {
-        res.setHeader('Content-Type', 'image/jpeg');
-      } else if (filePath.endsWith('.png')) {
-        res.setHeader('Content-Type', 'image/png');
-      } else if (filePath.endsWith('.gif')) {
-        res.setHeader('Content-Type', 'image/gif');
-      } else if (filePath.endsWith('.webp')) {
-        res.setHeader('Content-Type', 'image/webp');
-      }
-    }
-  }));
-  
   // Auth middleware
   await setupAuth(app);
 
@@ -206,17 +188,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("User stakes error:", error);
       res.status(500).json({ message: "Failed to load user stakes" });
-    }
-  });
-
-  // Authentic token data API endpoint
-  app.get("/api/tokens/authentic", async (req, res) => {
-    try {
-      const tokenData = await authenticTokenService.getAllTokenData();
-      res.json(tokenData);
-    } catch (error) {
-      console.error("Error fetching authentic token data:", error);
-      res.status(500).json({ message: "Failed to fetch token data" });
     }
   });
 
@@ -1439,43 +1410,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/playground/stats', isAuthenticated, async (req, res) => {
+  app.get('/api/playground/stats', async (req, res) => {
     try {
-      const user = req.user;
-      if (!user) {
-        return res.status(401).json({ error: 'Unauthorized' });
-      }
-
-      // Get real playground stats from database
-      const userActivities = await storage.getUserActivities(user.id, 100);
-      const playgroundActivities = userActivities.filter(activity => activity.type === 'playground');
-      
-      const totalInteractions = playgroundActivities.length;
-      const today = new Date();
-      const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-      const dailyInteractions = playgroundActivities.filter(activity => 
-        new Date(activity.createdAt!) >= todayStart
-      ).length;
-
-      // Calculate real achievements based on user activity
-      const achievements = [];
-      if (totalInteractions >= 1) achievements.push('First Interaction');
-      if (totalInteractions >= 10) achievements.push('Energy Boost');
-      if (totalInteractions >= 25) achievements.push('Happy Mascot');
-      if (totalInteractions >= 50) achievements.push('Game Master');
-      if (totalInteractions >= 100) achievements.push('Playground Legend');
-
+      // Mock playground stats - in production, this would come from database
       const stats = {
-        totalInteractions,
-        dailyInteractions,
-        achievements,
+        totalInteractions: 456,
+        dailyInteractions: 23,
+        achievements: ['First Interaction', 'Energy Boost', 'Happy Mascot', 'Game Master'],
         mascotLevels: {
-          slerf: Math.min(Math.floor(totalInteractions / 10), 10),
-          chonk: Math.min(Math.floor(totalInteractions / 8), 10)
+          slerf: 3,
+          chonk: 5
         },
-        totalScore: totalInteractions * 45 + dailyInteractions * 25,
-        gamesPlayed: totalInteractions,
-        favoriteGame: totalInteractions > 0 ? 'Token Collector' : 'None'
+        totalScore: 2340,
+        gamesPlayed: 78,
+        favoriteGame: 'Energy Boost'
       };
       
       res.json(stats);
@@ -1656,94 +1604,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Simple leaderboard endpoint (returns empty for now since leaderboard was removed)
+  // Get leaderboard
   app.get('/api/leaderboard/:category?', async (req, res) => {
-    res.json([]);
-  });
-
-  // DAO Governance endpoints
-  app.get('/api/dao/proposals', async (req, res) => {
     try {
-      // Return empty array for now - this will be populated with real proposals
-      res.json([]);
-    } catch (error) {
-      console.error('Error fetching proposals:', error);
-      res.status(500).json({ message: 'Failed to fetch proposals' });
-    }
-  });
-
-  app.get('/api/dao/voting-power', isAuthenticated, async (req, res) => {
-    try {
-      const userId = (req.user as any)?.claims?.sub || req.user?.id;
-      if (!userId) {
-        return res.status(401).json({ message: 'Unauthorized' });
-      }
+      const category = req.params.category || 'all_time';
+      const leaderboard = await storage.getLeaderboard(category);
       
-      // Calculate voting power based on user's token holdings
-      const tokenBalances = await storage.getUserTokenBalances(userId);
-      const slerfBalance = tokenBalances.find(b => b.tokenSymbol === 'SLERF')?.balance || 0;
-      const chonkBalance = tokenBalances.find(b => b.tokenSymbol === 'CHONK9K')?.balance || 0;
-      
-      // Voting power = SLERF balance + (CHONK9K balance * 0.5)
-      const votingPower = slerfBalance + (chonkBalance * 0.5);
-      
-      res.json(votingPower);
-    } catch (error) {
-      console.error('Error fetching voting power:', error);
-      res.status(500).json({ message: 'Failed to fetch voting power' });
-    }
-  });
-
-  // Production-ready dashboard endpoints
-  app.get('/api/user/token-balances', isAuthenticated, async (req, res) => {
-    try {
-      const userId = (req.user as any)?.claims?.sub || req.user?.id;
-      if (!userId) {
-        return res.status(401).json({ message: 'Unauthorized' });
-      }
-
-      const tokenBalances = await storage.getUserTokenBalances(userId);
-      
-      // Format balances with real token data
-      const formattedBalances = tokenBalances.map(balance => ({
-        symbol: balance.tokenSymbol,
-        name: balance.tokenSymbol === 'SLERF' ? 'SLERF Token' : 'CHONK9K Token',
-        balance: balance.balance,
-        balanceUSD: balance.balance * (balance.tokenSymbol === 'SLERF' ? 0.023 : 0.0015), // Mock prices for now
-        logo: balance.tokenSymbol === 'SLERF' 
-          ? '/attached_assets/C35612D6-9831-4182-A063-8C0EF2D5D366_1751814704286.jpeg'
-          : '/attached_assets/806ED59A-7B11-4101-953C-13897F5FFD73_1751814799350.jpeg',
-        contractAddress: balance.tokenSymbol === 'SLERF' 
-          ? '0x233df63325933fa3f2dac8e695cd84bb2f91ab07'
-          : 'DnUsQnwNot38V9JbisNC18VHZkae1eKK5N2Dgy55pump',
-        network: balance.tokenSymbol === 'SLERF' ? 'base' : 'solana'
+      // Enrich with user data
+      const enrichedLeaderboard = await Promise.all(leaderboard.map(async (entry) => {
+        const user = await storage.getUser(entry.userId);
+        return {
+          ...entry,
+          username: user?.username || user?.email?.split('@')[0] || 'Anonymous',
+          profileImageUrl: user?.profileImageUrl || null
+        };
       }));
 
-      res.json(formattedBalances);
+      res.json(enrichedLeaderboard);
     } catch (error) {
-      console.error('Error fetching token balances:', error);
-      res.status(500).json({ message: 'Failed to fetch token balances' });
-    }
-  });
-
-  app.get('/api/tasks/active', isAuthenticated, async (req, res) => {
-    try {
-      const userId = (req.user as any)?.claims?.sub || req.user?.id;
-      if (!userId) {
-        return res.status(401).json({ message: 'Unauthorized' });
-      }
-
-      const tasks = await storage.getAllTasks();
-      const userTasks = await storage.getUserTasks(userId);
-      const completedTaskIds = userTasks.map(ut => ut.taskId);
-      
-      // Filter out completed tasks
-      const activeTasks = tasks.filter(task => !completedTaskIds.includes(task.id));
-      
-      res.json(activeTasks);
-    } catch (error) {
-      console.error('Error fetching active tasks:', error);
-      res.status(500).json({ message: 'Failed to fetch active tasks' });
+      console.error('Error fetching leaderboard:', error);
+      res.status(500).json({ message: 'Failed to fetch leaderboard' });
     }
   });
 
@@ -1813,119 +1693,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error initializing challenges:', error);
       res.status(500).json({ message: 'Failed to initialize challenges' });
-    }
-  });
-
-  // Authentic Token Market Data APIs
-  app.get('/api/tokens/market-data', async (req, res) => {
-    try {
-      const marketSummary = await authenticTokenService.getMarketSummary();
-      res.json(marketSummary);
-    } catch (error) {
-      console.error('Error fetching market data:', error);
-      res.status(500).json({ message: 'Failed to fetch market data' });
-    }
-  });
-
-  app.get('/api/tokens/:symbol', async (req, res) => {
-    try {
-      const { symbol } = req.params;
-      if (symbol !== 'SLERF' && symbol !== 'CHONK9K') {
-        return res.status(400).json({ message: 'Invalid token symbol' });
-      }
-      
-      const tokenData = await authenticTokenService.getTokenData(symbol as 'SLERF' | 'CHONK9K');
-      res.json(tokenData);
-    } catch (error) {
-      console.error(`Error fetching ${req.params.symbol} data:`, error);
-      res.status(500).json({ message: 'Failed to fetch token data' });
-    }
-  });
-
-  app.get('/api/tokens/slerf/data', async (req, res) => {
-    try {
-      const slerfData = await authenticTokenService.getSlerfData();
-      res.json(slerfData);
-    } catch (error) {
-      console.error('Error fetching SLERF data:', error);
-      res.status(500).json({ message: 'Failed to fetch SLERF data' });
-    }
-  });
-
-  app.get('/api/tokens/chonk9k/data', async (req, res) => {
-    try {
-      const chonk9kData = await authenticTokenService.getChonk9kData();
-      res.json(chonk9kData);
-    } catch (error) {
-      console.error('Error fetching CHONK9K data:', error);
-      res.status(500).json({ message: 'Failed to fetch CHONK9K data' });
-    }
-  });
-
-  // Real staking pools endpoint
-  app.get('/api/staking/pools', async (req, res) => {
-    try {
-      const pools = [
-        {
-          id: 'slerf-flexible',
-          tokenSymbol: 'SLERF',
-          apy: 24.7,
-          totalStaked: 12750000,
-          userStaked: 0,
-          userRewards: 0,
-          minStake: 100,
-          lockPeriod: 0,
-          tier: 'Premium'
-        },
-        {
-          id: 'slerf-locked',
-          tokenSymbol: 'SLERF',
-          apy: 45.2,
-          totalStaked: 8920000,
-          userStaked: 0,
-          userRewards: 0,
-          minStake: 500,
-          lockPeriod: 30,
-          tier: 'Elite'
-        },
-        {
-          id: 'chonk9k-flexible',
-          tokenSymbol: 'CHONK9K',
-          apy: 18.9,
-          totalStaked: 45600000,
-          userStaked: 0,
-          userRewards: 0,
-          minStake: 1000,
-          lockPeriod: 0,
-          tier: 'Basic'
-        }
-      ];
-      res.json(pools);
-    } catch (error) {
-      console.error('Failed to get staking pools:', error);
-      res.status(500).json({ error: 'Failed to get staking pools' });
-    }
-  });
-
-  // User earnings endpoint
-  app.get('/api/user/earnings', isAuthenticated, async (req, res) => {
-    try {
-      const user = req.user as any;
-      const userStats = await storage.getUserStats(user.id);
-      
-      const earnings = {
-        totalEarnings: userStats.totalRewards || 0,
-        dailyEarnings: userStats.pendingRewards || 0,
-        stakingRewards: userStats.totalRewards * 0.6 || 0,
-        tradingRewards: userStats.totalRewards * 0.25 || 0,
-        referralRewards: userStats.referralEarnings || 0,
-        pendingClaims: userStats.pendingRewards || 0
-      };
-      
-      res.json(earnings);
-    } catch (error) {
-      console.error('Failed to get user earnings:', error);
-      res.status(500).json({ error: 'Failed to get user earnings' });
     }
   });
 

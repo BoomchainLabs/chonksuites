@@ -42,40 +42,23 @@ export const formatTime = (date: Date): string => {
   }
 };
 
-export const realWalletConnection = {
-  // Real EVM wallet connection using MetaMask or WalletConnect
+export const mockWalletConnection = {
+  // Mock EVM wallet connection
   connectEVM: async (): Promise<{ address: string; chainId: number }> => {
-    if (typeof window !== 'undefined' && window.ethereum) {
-      try {
-        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-        const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-        return {
-          address: accounts[0],
-          chainId: parseInt(chainId, 16)
-        };
-      } catch (error) {
-        console.error('Error connecting to EVM wallet:', error);
-        throw new Error('Failed to connect EVM wallet');
-      }
-    } else {
-      throw new Error('MetaMask not detected');
-    }
+    // Simulate wallet connection delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    return {
+      address: "0x1234567890123456789012345678901234567890",
+      chainId: 8453 // Base chain ID
+    };
   },
 
-  // Real Solana wallet connection using Phantom or Solflare
+  // Mock Solana wallet connection
   connectSolana: async (): Promise<{ address: string }> => {
-    if (typeof window !== 'undefined' && window.solana) {
-      try {
-        const response = await window.solana.connect();
-        return {
-          address: response.publicKey.toString()
-        };
-      } catch (error) {
-        console.error('Error connecting to Solana wallet:', error);
-        throw new Error('Failed to connect Solana wallet');
-      }
-    } else {
-      throw new Error('Solana wallet not detected');
-    }
+    // Simulate wallet connection delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    return {
+      address: "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM"
+    };
   }
 };

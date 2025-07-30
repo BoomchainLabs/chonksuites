@@ -82,7 +82,6 @@ export const activities = pgTable("activities", {
   type: text("type").notNull(), // 'task_completed', 'referral_earned', 'tokens_claimed'
   description: text("description").notNull(),
   reward: integer("reward").default(0),
-  points: integer("points").default(0),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -215,6 +214,13 @@ export const leaderboardEntries = pgTable("leaderboard_entries", {
 export const insertUserSchema = createInsertSchema(users).omit({
   createdAt: true,
   updatedAt: true,
+  totalRewards: true,
+  tasksCompleted: true,
+  referralCount: true,
+  loyaltyScore: true,
+  pendingRewards: true,
+  referralEarnings: true,
+  loginStreak: true,
 });
 
 export const upsertUserSchema = createInsertSchema(users).pick({
