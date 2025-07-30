@@ -5,42 +5,38 @@
 @tailwind utilities;
 
 :root {
-  /* Professional Web3 Gaming Theme */
-  --background: hsl(225, 25%, 8%);
-  --foreground: hsl(210, 40%, 98%);
-  --card: hsl(224, 28%, 12%);
-  --card-foreground: hsl(210, 40%, 98%);
-  --popover: hsl(224, 28%, 12%);
-  --popover-foreground: hsl(210, 40%, 98%);
-  --primary: hsl(270, 95%, 75%);
-  --primary-foreground: hsl(225, 25%, 8%);
-  --secondary: hsl(224, 25%, 18%);
-  --secondary-foreground: hsl(210, 40%, 98%);
-  --muted: hsl(224, 25%, 16%);
-  --muted-foreground: hsl(215, 15%, 65%);
-  --accent: hsl(270, 95%, 75%);
-  --accent-foreground: hsl(225, 25%, 8%);
+  /* Professional Dark Theme */
+  --background: hsl(220, 13%, 9%);
+  --foreground: hsl(220, 9%, 95%);
+  --card: hsl(220, 13%, 11%);
+  --card-foreground: hsl(220, 9%, 95%);
+  --popover: hsl(220, 13%, 11%);
+  --popover-foreground: hsl(220, 9%, 95%);
+  --primary: hsl(142, 76%, 36%);
+  --primary-foreground: hsl(220, 13%, 9%);
+  --secondary: hsl(220, 13%, 15%);
+  --secondary-foreground: hsl(220, 9%, 95%);
+  --muted: hsl(220, 13%, 15%);
+  --muted-foreground: hsl(220, 9%, 60%);
+  --accent: hsl(220, 13%, 15%);
+  --accent-foreground: hsl(220, 9%, 95%);
   --destructive: hsl(0, 84%, 60%);
-  --destructive-foreground: hsl(210, 40%, 98%);
-  --border: hsl(224, 25%, 20%);
-  --input: hsl(224, 28%, 15%);
-  --ring: hsl(270, 95%, 75%);
+  --destructive-foreground: hsl(220, 13%, 9%);
+  --border: hsl(220, 13%, 18%);
+  --input: hsl(220, 13%, 15%);
+  --ring: hsl(142, 76%, 36%);
   --radius: 0.75rem;
   
-  /* Gaming & Web3 Theme Colors */
-  --neon-cyan: hsl(180, 100%, 50%);
-  --neon-purple: hsl(270, 95%, 75%);
-  --neon-pink: hsl(320, 100%, 70%);
-  --neon-blue: hsl(220, 100%, 65%);
-  --success: hsl(120, 100%, 50%);
-  --warning: hsl(45, 100%, 60%);
-  --info: hsl(200, 100%, 65%);
-  --gradient-start: hsl(270, 95%, 75%);
-  --gradient-end: hsl(180, 100%, 50%);
-  --glass-bg: rgba(139, 69, 255, 0.1);
-  --glass-border: rgba(139, 69, 255, 0.2);
-  --glow-primary: rgba(139, 69, 255, 0.5);
-  --glow-secondary: rgba(0, 255, 255, 0.3);
+  /* Premium Professional Colors */
+  --success: hsl(142, 76%, 36%);
+  --warning: hsl(38, 92%, 50%);
+  --info: hsl(217, 91%, 60%);
+  --gradient-start: hsl(142, 76%, 36%);
+  --gradient-end: hsl(217, 91%, 60%);
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glow-primary: rgba(34, 197, 94, 0.4);
+  --glow-secondary: rgba(59, 130, 246, 0.3);
 }
 
 @layer base {
@@ -58,19 +54,10 @@
     touch-action: manipulation;
     -webkit-text-size-adjust: 100%;
     -webkit-tap-highlight-color: transparent;
-    background: linear-gradient(135deg, hsl(225, 25%, 8%) 0%, hsl(224, 28%, 12%) 50%, hsl(225, 25%, 8%) 100%);
+    background: radial-gradient(ellipse at top, hsl(220, 13%, 12%) 0%, hsl(220, 13%, 9%) 100%);
     min-height: 100vh;
     width: 100%;
     overflow-x: hidden;
-  }
-
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Space Grotesk', sans-serif;
-    font-weight: 600;
-  }
-
-  .font-mono {
-    font-family: 'JetBrains Mono', monospace;
   }
 
   html {
