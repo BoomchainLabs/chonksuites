@@ -52,7 +52,7 @@
     "cmdk": "^1.1.1",
     "connect-pg-simple": "^10.0.0",
     "date-fns": "^3.6.0",
-    "drizzle-orm": "^0.39.1",
+    "drizzle-orm": "^0.44.0",
     "drizzle-zod": "^0.7.0",
     "embla-carousel-react": "^8.6.0",
     "ethers": "^6.15.0",
