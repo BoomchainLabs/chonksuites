@@ -61,7 +61,7 @@
     "framer-motion": "^11.13.1",
     "input-otp": "^1.4.2",
     "lightweight-charts": "^5.0.8",
-    "lucide-react": "^0.453.0",
+    "lucide-react": "^0.536.0",
     "memoizee": "^0.4.17",
     "memorystore": "^1.6.7",
     "nanoid": "^5.1.5",
