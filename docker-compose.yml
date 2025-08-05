@@ -21,7 +21,7 @@ services:
       - chonk9k-network
 
   db:
-    image: postgres:15
+    image: postgres:17
     environment:
       - POSTGRES_DB=chonk9k
       - POSTGRES_USER=chonk9k_user
