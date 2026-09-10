@@ -13,7 +13,7 @@
   },
   "devDependencies": {
     "vite": "^5.2.10",
-    "@vitejs/plugin-vue": "^5.0.4",
+    "@vitejs/plugin-vue": "^6.0.0",
     "rollup": "^4.17.0",
     "esbuild": "^0.21.0"
   },
