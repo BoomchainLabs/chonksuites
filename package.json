@@ -15,7 +15,7 @@
     "vite": "^5.2.10",
     "@vitejs/plugin-vue": "^5.0.4",
     "rollup": "^4.17.0",
-    "esbuild": "^0.21.0"
+    "esbuild": "^0.28.0"
   },
   "engines": {
     "node": ">=18.0.0"
